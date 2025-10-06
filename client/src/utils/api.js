@@ -1,6 +1,6 @@
 import axios from "axios";
 
-const baseURL = import.meta.env.VITE_API_URL || "http://localhost:8000";  // UPDATED: Default to full URL if not set
+const baseURL = import.meta.env.VITE_API_URL || "https://altaif-app.onrender.com";  // UPDATED: Default to full URL if not set
 const api = axios.create({
   baseURL,
   headers: { "Content-Type": "application/json" },
