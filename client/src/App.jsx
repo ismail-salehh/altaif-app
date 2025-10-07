@@ -4,6 +4,8 @@ import Index from "./pages/Index";
 import Game from "./pages/GamePage";
 import { useQuery } from "@tanstack/react-query";
 import api from "./utils/api";  // Import api
+import AboutPage from "./pages/AboutPage";
+import About from "./pages/AboutPage";
 
 export default function App() {
   const { data: authUser, isLoading } = useQuery({
@@ -44,6 +46,7 @@ export default function App() {
               !authUser ? <Index /> : <Navigate to="/" />
             } 
           />
+          <Route path="/about" element={ <About />} />
         </Routes>
       </Router>
     </AuthProvider>
