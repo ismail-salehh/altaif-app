@@ -1,5 +1,6 @@
 import React from 'react';
 import HTMLFlipBook from 'react-pageflip';
+import { Link } from 'react-router-dom';
 
 const AboutPage = () => {
   return (
