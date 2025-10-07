@@ -93,6 +93,14 @@ const AboutPage = () => {
         <p className="text-2sm text-emerald-900 italic leading-relaxed">
           الطَّيف صُمّم خصيصًا للأطفال من طيف التوحّد، ليمنحهم تجربة سردية هادئة، ممتعة، وقابلة للتخصيص حسب اهتماماتهم واحتياجاتهم. لكل طفل طريقته في عيش القصة، ونحن هنا لنرافقه.
         </p>
+          <span>
+          <Link
+            to="/"
+            className="text-amber-700 hover:text-emerald-700 text-sm underline"
+          >
+            العودة الى صفحة التسجيل
+          </Link>
+        </span>
       </div>
     </div>
   );
