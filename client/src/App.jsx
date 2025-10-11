@@ -69,6 +69,7 @@ export default function App() {
             <Route path="/forgot-password" element={<ForgotPassword />} />
             <Route path="/reset-password/:token" element={<ResetPassword />} />
             <Route path="/about" element={<About />} />
+            <Route path="/game" element={<Game />} />
           </Routes>
         </Router>
       </AuthProvider>
