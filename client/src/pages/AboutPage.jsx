@@ -96,7 +96,7 @@ const AboutPage = () => {
         </p>
           <span>
           <Link
-            to="/"
+            to="/login"
             className="text-amber-700 hover:text-emerald-700 text-sm underline"
           >
             العودة الى صفحة التسجيل

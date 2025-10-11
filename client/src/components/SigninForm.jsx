@@ -1,15 +1,15 @@
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import React, { useContext, useState } from "react";
-import { Link } from "react-router-dom";
+import { GoogleLogin } from "@react-oauth/google";
+import { Link, useNavigate } from "react-router-dom";
 import { AuthContext } from "../context/AuthContext";
 
 export default function SigninForm() {
-  const [formData, setFormData] = useState({
-    email: "",
-    password: "",
-  });
-  const { login } = useContext(AuthContext);
+  const [formData, setFormData] = useState({ email: "", password: "" });
+  const [errorMessage, setError] = useState(null);
+  const { login, googleLogin } = useContext(AuthContext);
   const queryClient = useQueryClient();
+  const navigate = useNavigate();
 
   const {
     mutate: loginMutation,
@@ -22,13 +22,40 @@ export default function SigninForm() {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["authUser"] });
+      navigate("/game");
     },
   });
-  
-	const handleSubmit = (e) => {
-		e.preventDefault();
-		loginMutation(formData);
-	};
+
+  const validateInputs = () => {
+    const { email, password } = formData;
+    if (!email || !password)
+      return "املأ البريد البريد الالكتروني أو كلمة المرور";
+    if (!/\S+@\S+\.\S+/.test(email)) return "البريد الالكتروني خاطئ";
+    return null;
+  };
+
+  const handleGoogleSuccess = async (response) => {
+    try {
+      const { credential } = response;
+      const userData = await googleLogin(credential);
+
+      navigate("/game");
+    } catch (err) {
+      console.error(err);
+      setError("فشل تسجيل الدخول باستخدام جوجل");
+    }
+  };
+
+  const handleGoogleError = () => {
+    setError("فشل تسجيل الدخول باستخدام جوجل");
+  };
+
+  const handleSubmit = (e) => {
+    e.preventDefault();
+    const validationError = validateInputs();
+    if (validationError) return setError(validationError);
+    loginMutation(formData);
+  };
 
   const handleInputChange = (e) => {
     setFormData({ ...formData, [e.target.name]: e.target.value });
@@ -40,10 +67,17 @@ export default function SigninForm() {
         <h1 className="text-3xl font-bold text-gray-900 mb-6">تسجيل الدخول</h1>
 
         <div className="social-container flex justify-center items-center space-x-4 mb-4">
-          <button className="w-10 h-10 bg-white border border-gray-300 rounded-full flex items-center justify-center shadow-sm hover:shadow-md transition-shadow">
-            <img src="/images/google-icon.webp" alt="Google" className="w-5 h-5" />
-          </button>
-          <span className="text-xs text-gray-500 mb-0">أو الدخول باستخدام جوجل</span>
+          <GoogleLogin
+            onSuccess={handleGoogleSuccess}
+            onError={handleGoogleError}
+            theme="outline"
+            size="medium"
+            text="sign_in_with_google"
+            shape="rectangular"
+          />
+          <span className="text-xs text-gray-500 mb-0">
+            أو الدخول باستخدام جوجل
+          </span>
         </div>
 
         <input
@@ -62,14 +96,23 @@ export default function SigninForm() {
           onChange={handleInputChange}
           value={formData.password}
         />
-        <Link to="#" className="text-xs text-emerald-600 hover:underline block mb-4">
+
+        {errorMessage && <p className="text-red-500 text-sm">{errorMessage}</p>}
+        {isError && <p className="text-red-500 text-sm">{error.message}</p>}
+
+        <Link
+          to="../forgot-password"
+          className="text-xs text-emerald-600 hover:underline block mb-4"
+        >
           هل نسيت كلمة المرور؟
         </Link>
+
         <button
           type="submit"
           className="w-full py-3 px-6 bg-emerald-500 text-white font-bold rounded-lg uppercase tracking-wide text-sm transition-transform hover:scale-95 focus:outline-none"
+          disabled={isPending}
         >
-          تسجيل الدخول
+          {isPending ? "جاري الدخول..." : "تسجيل الدخول"}
         </button>
       </form>
     </div>

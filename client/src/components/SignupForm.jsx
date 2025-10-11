@@ -1,17 +1,20 @@
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { useContext, useState } from "react";
 import { AuthContext } from "../context/AuthContext";
+import { GoogleLogin } from "@react-oauth/google";
+import { useNavigate } from "react-router-dom";
 
 export default function SignupForm({ isSignUp }) {
-  
-  	const [formData, setFormData] = useState({
-		username: "",
+  const [formData, setFormData] = useState({
+    username: "",
     email: "",
-		password: "",
-	});
+    password: "",
+  });
+  const [errorMessage, setError] = useState(null);
 
-  const { signup } = useContext(AuthContext);
+  const { signup, googleLogin } = useContext(AuthContext);
   const queryClient = useQueryClient();
+  const navigate = useNavigate();
 
   const { mutate, isError, isPending, error } = useMutation({
     mutationFn: async ({ username, email, password }) => {
@@ -19,18 +22,49 @@ export default function SignupForm({ isSignUp }) {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["authUser"] });
+      navigate("/game");
     },
   });
 
+  const validateInputs = () => {
+    const { username, email, password } = formData;
+    if (!username || !email || !password) return "الرجاء تعبئة جميع الحقول";
+    if (username.length < 2) return "الاسم يجب أن يتكون من حرفين على الأقل";
+    if (!/\S+@\S+\.\S+/.test(email)) return "الرجاء ادخال بريد الكتروني مناسب";
+    if (password.length < 6) return "يجب أن تتكون كلمة المرور من 6 أحرف على الأقل";
+    return null;
+  };
+
+  const handleGoogleSuccess = async (response) => {
+    try {
+      const { credential } = response;
+      const userData = await googleLogin(credential);
+
+      navigate("/game");
+    } catch (err) {
+      console.error(err);
+      setError("فشل تسجيل الدخول باستخدام جوجل");
+    }
+  };
+
+  const handleGoogleError = () => {
+    setError("فشل تسجيل الدخول باستخدام جوجل");
+  };
+
   const handleSubmit = (e) => {
     e.preventDefault();
+    const validationError = validateInputs();
+    if (validationError) {
+      setError(validationError);
+      return;
+    }
     mutate(formData);
   };
 
   const handleInputChange = (e) => {
     setFormData({ ...formData, [e.target.name]: e.target.value });
   };
-  
+
   return (
     <div
       className={`form-container sign-up-container absolute top-0 left-0 w-1/2 h-full z-0 opacity-0 transition-all duration-600 ease-in-out flex items-center justify-center p-12 text-center ${
@@ -41,13 +75,14 @@ export default function SignupForm({ isSignUp }) {
         <h1 className="text-3xl font-bold text-gray-900 mb-6">إنشاء حساب</h1>
 
         <div className="social-container flex justify-center space-x-4 mb-4">
-          <button className="w-10 h-10 bg-white border border-gray-300 rounded-full flex items-center justify-center shadow-sm hover:shadow-md transition-shadow">
-            <img
-              src="/images/google-icon.webp"
-              alt="Google"
-              className="w-5 h-5"
-            />
-          </button>
+          <GoogleLogin
+            onSuccess={handleGoogleSuccess}
+            onError={handleGoogleError}
+            theme="outline"
+            size="medium"
+            text="signup_with_google"
+            shape="rectangular"
+          />
         </div>
 
         <span className="text-xs text-gray-500 block mb-4">
@@ -78,11 +113,16 @@ export default function SignupForm({ isSignUp }) {
           onChange={handleInputChange}
           value={formData.password}
         />
+
+        {errorMessage && <p className="text-red-500 text-sm">{errorMessage}</p>}
+        {isError && <p className="text-red-500 text-sm">{error.message}</p>}
+
         <button
           type="submit"
           className="w-full py-3 px-6 bg-emerald-500 text-white font-bold rounded-lg uppercase tracking-wide text-sm transition-transform hover:scale-95 focus:outline-none"
+          disabled={isPending}
         >
-          إنشاء حساب
+          {isPending ? "جاري التسجيل..." : "إنشاء حساب"}
         </button>
       </form>
     </div>

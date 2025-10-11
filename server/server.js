@@ -10,15 +10,14 @@ dotenv.config();
 
 const app = express();
 
-// FIXED: Full CORS + credentials
+// : Full CORS + credentials
 app.use(cors({
-  origin: process.env.NODE_ENV === "production" ? "https://yourdomain.com" : "http://localhost:5173",  // Match your Vite port exactly!
+  origin: process.env.NODE_ENV === "production" ? "https://altaif-app.onrender.com" : "http://localhost:8000",  // Match your Vite port exactly!
   credentials: true
 }));
 
 // ADD: Parse cookies (critical for req.cookies in protect)
 app.use(cookieParser());
-
 app.use(express.json());
 
 // Routes
@@ -36,6 +35,6 @@ if (process.env.NODE_ENV === "production") {
 
 const PORT = process.env.PORT || 8000;
 app.listen(PORT, () => {
-  console.log(`🚀 Server running on port ${PORT}`);
+  console.log(`🚀 Server running on port http://localhost:${PORT}`);
   connectDB();
 });
