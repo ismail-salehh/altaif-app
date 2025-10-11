@@ -45,7 +45,7 @@ const ForgotPassword = () => {
           disabled={loading}
           className="w-full bg-emerald-500 text-white font-bold py-2 rounded-lg hover:bg-emerald-700 transition"
         >
-          {loading ? "...جاري الإرسال" : "تم إرسال الرابط"}
+          {loading ? "جاري الإرسال" : "إرسال"}
         </button>
 
         {message && (
