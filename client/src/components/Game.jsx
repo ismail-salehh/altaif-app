@@ -3,6 +3,7 @@ import { useMutation, useQueryClient } from "@tanstack/react-query"; // Added mi
 import imageMap from "../utils/imageMap.js";
 import { gameData } from "../utils/gameData.js";
 import { AuthContext } from "../context/AuthContext";
+import { useNavigate } from "react-router-dom";
 
 const AdventureGame = () => {
   const [currentIndex, setCurrentIndex] = useState(0);
@@ -15,16 +16,24 @@ const AdventureGame = () => {
   const queryClient = useQueryClient();
 
   const {
-    mutate: logoutMutation,
-    isPending,
-    isError,
-    error,
+  mutate: logoutMutation,
+  isPending,
+  isError,
+  error,
   } = useMutation({
-    mutationFn: async () => { // Removed { email, password }—logout takes no params
-      return await logout(); // Just call logout() directly
+    mutationFn: async () => {
+      return await logout();
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["authUser"] });
+      queryClient.removeQueries({ queryKey: ["authUser"] });
+        // Optional but recommended: Redirect to login page
+      const navigate = useNavigate();
+      navigate("/login", { replace: true }); // Replace to avoid back-button issues
+    },
+    onError: (err) => {
+      console.error("Logout mutation failed:", err);
+      // Optionally show a toast or alert, but since backend logout is idempotent, you could still clear cache here
+      queryClient.removeQueries({ queryKey: ["authUser"] });
     },
   });
   
