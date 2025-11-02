@@ -14,7 +14,8 @@ const AdventureGame = () => {
   
   const { logout } = useContext(AuthContext);
   const queryClient = useQueryClient();
-
+  const navigate = useNavigate();
+  
   const {
   mutate: logoutMutation,
   isPending,
@@ -27,7 +28,6 @@ const AdventureGame = () => {
     onSuccess: () => {
       queryClient.removeQueries({ queryKey: ["authUser"] });
         // Optional but recommended: Redirect to login page
-      const navigate = useNavigate();
       navigate("/login", { replace: true }); // Replace to avoid back-button issues
     },
     onError: (err) => {
