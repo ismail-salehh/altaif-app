@@ -1,4 +1,9 @@
-import { BrowserRouter as Router,  Routes,  Route,  Navigate,} from "react-router-dom";
+import {
+  BrowserRouter as Router,
+  Routes,
+  Route,
+  Navigate,
+} from "react-router-dom";
 import { AuthProvider } from "./context/AuthContext";
 import Index from "./pages/Index";
 import Game from "./pages/GamePage";
@@ -69,7 +74,20 @@ export default function App() {
             <Route path="/forgot-password" element={<ForgotPassword />} />
             <Route path="/reset-password/:token" element={<ResetPassword />} />
             <Route path="/about" element={<About />} />
-            <Route path="/game" element={<Game />} />
+            <Route
+              path="/game"
+              element={
+                isLoading ? (
+                  <div className="flex items-center justify-center min-h-screen">
+                    Loading...
+                  </div>
+                ) : !authUser ? (
+                  <Index />
+                ) : (
+                  <Game />
+                )
+              }
+            />
           </Routes>
         </Router>
       </AuthProvider>
