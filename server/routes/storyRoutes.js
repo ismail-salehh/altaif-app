@@ -1,6 +1,6 @@
-const express = require('express');
+import express from 'express';
+import { generateStory } from '../controllers/storyController.js';
 const router = express.Router();
-const { generateStory } = require('../controllers/storyController');
 
 // Protect with authMiddleware if needed
 router.post('/generate', generateStory);
