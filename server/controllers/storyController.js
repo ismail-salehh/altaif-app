@@ -59,4 +59,4 @@ const generateStory = async (req, res) => {
   }
 };
 
-module.exports = { generateStory };
+export default { generateStory };

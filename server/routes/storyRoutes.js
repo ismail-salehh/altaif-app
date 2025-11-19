@@ -5,4 +5,4 @@ const { generateStory } = require('../controllers/storyController');
 // Protect with authMiddleware if needed
 router.post('/generate', generateStory);
 
-module.exports = router;
+export default router;
