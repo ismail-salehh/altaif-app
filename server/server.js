@@ -23,8 +23,8 @@ app.use(express.json());
 
 // Routes
 app.use("/api/auth", authRoutes);
-app.use("/api/story", storyRoutes);
-app.use('/assets/story', express.static(path.join(__dirname, 'temp'))); // Serve generated audio
+// app.use("/api/story", storyRoutes);
+// app.use('/assets/story', express.static(path.join(__dirname, 'temp'))); // Serve generated audio
 
 // serve frontend
 if (process.env.NODE_ENV === "production") {
