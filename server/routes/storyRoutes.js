@@ -1,8 +1,8 @@
-import express from 'express';
-import { generateStory } from '../controllers/storyController.js';
-const router = express.Router();
+// import express from 'express';
+// import { generateStory } from '../controllers/storyController.js';
+// const router = express.Router();
 
-// Protect with authMiddleware if needed
-router.post('/generate', generateStory);
+// // Protect with authMiddleware if needed
+// router.post('/generate', generateStory);
 
-export default router;
+// export default router;
