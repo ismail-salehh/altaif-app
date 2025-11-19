@@ -4,7 +4,7 @@ import cors from "cors";
 import cookieParser from "cookie-parser";  // Already imported
 import { connectDB } from "./config/db.js";
 import authRoutes from "./routes/authRoutes.js";
-import storyRoutes from "./routes/storyRoutes.js";
+// import storyRoutes from "./routes/storyRoutes.js";
 import path from "path";
 
 dotenv.config();
