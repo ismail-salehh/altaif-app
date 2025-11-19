@@ -1,4 +1,4 @@
-import { generateTokenAndSetCookie } from '../lib/utils/generateToken.js';
+import { generateTokenAndSetCookie } from '../utils/generateToken.js';
 import User from '../models/User.js';
 import bcrypt from 'bcryptjs';
 import { OAuth2Client } from 'google-auth-library';

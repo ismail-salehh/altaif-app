@@ -4,7 +4,7 @@ import { Link } from 'react-router-dom';
 
 const AboutPage = () => {
   return (
-    <div className="min-h-screen bg-gradient-to-br from-teal-400 to-pink-100 flex flex-col items-center justify-center p-4 py-8" dir="rtl">
+    <div className="min-h-screen bg-gradient-to-br from-teal-400 to-pink-100 flex flex-col items-center justify-center py-4" dir="rtl">
       <div className="w-full max-w-4xl mx-auto">
         <HTMLFlipBook
           width={400}
@@ -13,7 +13,7 @@ const AboutPage = () => {
           minWidth={315}
           maxWidth={1000}
           minHeight={420}
-          maxHeight={1350}
+          maxHeight={1050}
           maxShadowOpacity={0.5}
           mobileDisplay="single"
           flippingTime={1000}
@@ -90,16 +90,16 @@ const AboutPage = () => {
       </div>
 
       {/* Footer */}
-      <div className="mt-12 text-center max-w-2xl mx-auto px-4">
+      <div className="mt-8 text-center max-w-2xl mx-auto px-4">
         <p className="text-2sm text-emerald-900 italic leading-relaxed">
           الطَّيف صُمّم خصيصًا للأطفال من طيف التوحّد، ليمنحهم تجربة سردية هادئة، ممتعة، وقابلة للتخصيص حسب اهتماماتهم واحتياجاتهم. لكل طفل طريقته في عيش القصة، ونحن هنا لنرافقه.
         </p>
           <span>
           <Link
-            to="/login"
+            to="/"
             className="text-amber-700 hover:text-emerald-700 text-sm underline"
           >
-            العودة الى صفحة التسجيل
+            العودة الى الصفحة الرئيسية
           </Link>
         </span>
       </div>

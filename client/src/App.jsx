@@ -6,35 +6,19 @@ import {
 } from "react-router-dom";
 import { AuthProvider } from "./context/AuthContext";
 import Index from "./pages/Index";
-import Game from "./pages/GamePage";
+import GamePage from "./pages/GamePage"; // Fixed import
 import { useQuery } from "@tanstack/react-query";
 import api from "./utils/api"; // Import api
 import AboutPage from "./pages/AboutPage";
-import About from "./pages/AboutPage";
 import { GoogleOAuthProvider } from "@react-oauth/google";
-import ForgotPassword from "./pages/ForgotPassowrd";
+import ForgotPassword from "./pages/ForgotPassword"; // Fixed spelling
 import ResetPassword from "./pages/ResetPassword";
+import AuthModal from "./pages/AuthModal";
+import Game from "./pages/Game";
+import StoryDashboard from "./pages/StoryDashboard";
 
 export default function App() {
-  const { data: authUser, isLoading } = useQuery({
-    queryKey: ["authUser"],
-    queryFn: async () => {
-      try {
-        const res = await api.get("/api/auth/me"); // Uses cookies automatically
-        const data = res.data; // Simplified—no await needed
-        console.log("authUser is here:", data); // getMe returns { user }
-        if (data.error) return null;
-        return data.user; // Nested user
-      } catch (error) {
-        if (error.response?.status === 401) return null; // Graceful unauth
-        console.error("Auth query error:", error.response?.data || error);
-        throw error;
-      }
-    },
-    retry: false,
-    staleTime: 5 * 60 * 1000, // 5 minutes—added here
-    cacheTime: 10 * 60 * 1000, // 10 minutes—added here (use gcTime if React Query v5+)
-  });
+  const isLoading = false;
 
   const clientId = import.meta.env.VITE_GOOGLE_CLIENT_ID;
 
@@ -43,6 +27,7 @@ export default function App() {
       <AuthProvider>
         <Router>
           <Routes>
+            {/* Landing: Always Index (hero with Play Now button) */}
             <Route
               path="/"
               element={
@@ -50,44 +35,36 @@ export default function App() {
                   <div className="flex items-center justify-center min-h-screen">
                     Loading...
                   </div>
-                ) : authUser ? (
-                  <Game />
                 ) : (
-                  <Navigate to="/login" />
+                  <Index />
                 )
               }
             />
+            {/* Game: Always accessible (guest OK) */}
             <Route
-              path="/login"
+              path="/gamepage"
               element={
                 isLoading ? (
                   <div className="flex items-center justify-center min-h-screen">
                     Loading...
                   </div>
-                ) : !authUser ? (
-                  <Index />
                 ) : (
-                  <Navigate to="/" />
+                  <GamePage />
                 )
               }
             />
-            <Route path="/forgot-password" element={<ForgotPassword />} />
-            <Route path="/reset-password/:token" element={<ResetPassword />} />
-            <Route path="/about" element={<About />} />
             <Route
               path="/game"
-              element={
-                isLoading ? (
-                  <div className="flex items-center justify-center min-h-screen">
-                    Loading...
-                  </div>
-                ) : !authUser ? (
-                  <Index />
-                ) : (
-                  <Game />
-                )
-              }
+              element={<Game />}
             />
+            {/* About */}
+            <Route path="/about" element={<AboutPage />} />
+            {/* Auth Routes (modals handle UI, but these for forgot/reset) */}
+            <Route path="/forgot-password" element={<ForgotPassword />} />
+            <Route path="/reset-password/:token" element={<ResetPassword />} />
+            {/* Redirect /login to / (landing) - Auth via Navbar modal */}
+            <Route path="/login" element={<AuthModal />} />
+            <Route path="/story-dashboard" element={<StoryDashboard />} /> {/* New */}
           </Routes>
         </Router>
       </AuthProvider>

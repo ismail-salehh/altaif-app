@@ -1,27 +1,106 @@
-import { Link } from "react-router-dom";
-import { useContext } from "react";
+// /src/components/Navbar.jsx - Fixed with internal useQuery for auth
+import React, { useContext, useState } from "react";
+import { Link, useNavigate } from "react-router-dom";
+import { useMutation, useQuery } from "@tanstack/react-query";
+import api from "../utils/api";
 import { AuthContext } from "../context/AuthContext";
 
-export default function Navbar() {
-  const { user, logout } = useContext(AuthContext);
-  return (
-    <nav className="bg-[#113F67] text-white p-4 flex justify-between items-center">
-      <div className="font-bold">🌙 الطيف</div>
-      <div className="flex items-center gap-4">
-        <Link to="/game" className="hover:underline">اللعبة</Link>
-        <Link to="/dashboard" className="hover:underline">لوحة القصص</Link>
-        <Link to="/library" className="hover:underline">المكتبة</Link>
-        <Link to="/about" className="hover:underline">عن التطبيق</Link>
+const Navbar = () => {
+  // Internal auth query (same as App.jsx)
+  const { me } = useContext(AuthContext);
+  const navigate = useNavigate();
+  const { data: authUser, isLoading: authLoading } = useQuery({
+    queryKey: ["authUser"],
+    queryFn: async () => {
+      return await me();
+    },
+    staleTime: 5 * 60 * 1000, // 5 minutes
+    cacheTime: 15 * 60 * 1000, // 15 minutes
+    retry: false, // Don't retry on failure
+  });
+  const { logout } = useContext(AuthContext);
 
-        {user ? (
-          <>
-            <span className="text-sm">{user.username}</span>
-            <button onClick={logout} className="ml-2 bg-white text-[#113F67] px-3 py-1 rounded">خروج</button>
-          </>
-        ) : (
-          <Link to="/" className="bg-white text-[#113F67] px-3 py-1 rounded">دخول / تسجيل</Link>
-        )}
-      </div>
+  const {
+    mutate: logoutMutation,
+    isPending,
+    isError,
+    error,
+  } = useMutation({
+    mutationFn: async () => {
+      return await logout();
+    },
+    onSuccess: () => {
+      queryClient.removeQueries({ queryKey: ["authUser"] });
+      // Optional but recommended: Redirect to login page
+      navigate("/login", { replace: true }); // Replace to avoid back-button issues
+    },
+    onError: (err) => {
+      console.error("Logout mutation failed:", err);
+      // Optionally show a toast or alert, but since backend logout is idempotent, you could still clear cache here
+      queryClient.removeQueries({ queryKey: ["authUser"] });
+    },
+  });
+
+  if (authLoading) {
+    return <nav className="bg-white shadow-md p-4">Loading...</nav>;
+  }
+
+  return (
+    //add margin between buttons in the navbar
+    <nav className="bg-opacity-100 shadow-md p-4 flex justify-between items-center ">
+      {/* Logo and Home Link */}
+      <Link to="/" className="text-2xl font-bold text-emerald-600">
+        <img
+          src="/StoryLogo.png"
+          alt="Logo"
+          className="h-8 inline-block mr-2"
+        />
+        الطيف
+      </Link>
+
+      {/* About */}
+        <div className="flex items-center gap-4 space-x-4 space-x-reverse">
+          {!window.location.pathname.startsWith("/game") && (
+            <Link
+          to="/gamepage"
+          className="bg-emerald-500 text-white px-4 py-2 rounded hover:bg-emerald-600 transition-colors"
+            >
+          العب
+            </Link>
+          )}
+
+          {authUser ? (
+            <>
+          <span>مرحباً، {authUser.name}!</span>
+          <button
+            onClick={() => logoutMutation()} // Added () to call mutate properly
+            disabled={isPending} // Disable during logout
+            title={isPending ? "جاري تسجيل الخروج..." : "تسجيل الخروج"}
+            className="text-red-600 hover:underline"
+          >
+            تسجيل الخروج
+          </button>
+            </>
+          ) : (
+            <>
+          <button
+            onClick={() => navigate("/login")}
+            className="text-emerald-600 hover:underline"
+          >
+            تسجيل الدخول
+          </button>
+          <button
+            onClick={() => navigate("/login")}
+            className="bg-emerald-500 text-white px-4 py-2 rounded hover:bg-emerald-600 transition-colors"
+          >
+            إنشاء حساب
+          </button>
+            </>
+          )}
+        </div>
+
     </nav>
   );
-}
+};
+
+export default Navbar;

@@ -60,7 +60,7 @@ export const gameData = [
     soundname: "doyoulovetoreadstories",
     options: [
       { choice: "yes", text: "بحب القصص", media: "love-stories.webp" },
-      { choice: "sometimes", text: "أحيانًا", media: "sometimes.webp" },
+      { choice: "sometimes", text: "أحيانًا", media: "sometimes-stories.webp" },
       { choice: "no", text: "مش كتير", media: "no-stories.webp" }
     ]
   },
@@ -97,7 +97,7 @@ export const gameData = [
       { choice: "spiders", text: "العناكب", media: "spider.webp" },
       { choice: "heights", text: "المرتفعات", media: "height.webp" },
       { choice: "darkness", text: "العتمة", media: "darkness.webp" },
-      { choice: "loudnoises", text: "الصوت العالي", media: "loud-noise.webp" }
+      { choice: "loudnoises", text: "الصوت العالي", media: "loudness.webp" }
     ]
   },
 
@@ -119,7 +119,7 @@ export const gameData = [
     soundname: "behavioralchallenge",
     options: [
       { choice: "share", text: "بعطيه", media: "share.webp" },
-      { choice: "ask", text: "بطلبها بأدب", media: "ask-politely.webp" },
+      { choice: "ask", text: "بطلبها بأدب", media: "ask.webp" },
       { choice: "angry", text: "بعصب", media: "angry.webp" },
       { choice: "cry", text: "ببكي", media: "cry.webp" }
     ]

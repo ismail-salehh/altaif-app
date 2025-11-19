@@ -24,6 +24,11 @@ export const AuthProvider = ({ children }) => {
     catch (err) {console.warn("Logout API failed:", err);}
   };
 
+  const me = async () => {
+    const res = await api.get("/api/auth/me");
+    return res.data;
+  }
+
   return (
     <AuthContext.Provider value={{ signup, login, googleLogin, logout }}>
       {children}

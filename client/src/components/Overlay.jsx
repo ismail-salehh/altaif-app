@@ -10,7 +10,7 @@ export default function Overlay({ isSignUp, toggleSignIn, toggleSignUp }) {
       <div
         className="overlay relative left-[-100%] h-full w-[200%] bg-cover bg-center bg-no-repeat transition-transform duration-600 ease-in-out flex"
         style={{
-          backgroundImage: "url(/images/landing-bg.png)",
+          backgroundImage: "url(/images/website/landing-bg.png)",
           backgroundSize: "50% 100%",
           backgroundRepeat: "no-repeat",
           backgroundPosition: isSignUp ? "left center" : "right center",

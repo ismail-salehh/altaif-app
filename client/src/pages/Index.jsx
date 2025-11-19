@@ -1,42 +1,44 @@
-import React, { useState } from "react";
+import React from "react";
 import { Link } from "react-router-dom";
-import SigninForm from "../components/SigninForm";
-import SignupForm from "../components/SignupForm";
-import Overlay from "../components/Overlay";
+import Navbar from "../components/Navbar";
 
 const Index = () => {
-  const [isSignUp, setIsSignUp] = useState(false);
-
-  const toggleSignUp = () => setIsSignUp(true);
-  const toggleSignIn = () => setIsSignUp(false);
-
   return (
-    <div className="min-h-screen bg-gradient-to-br from-pink-400 to-teal-50 flex items-center justify-center py-12 px-4">
-      <div className="max-w-4xl w-full">
-        <div
-          id="container"
-          className={`relative overflow-hidden w-[768px] max-w-full min-h-[480px] bg-white rounded-xl shadow-[0_14px_28px_rgba(0,0,0,0.25),0_10px_10px_rgba(0,0,0,0.22)] mx-auto ${
-            isSignUp ? "right-panel-active" : ""
-          }`}
-        >
-          <SigninForm />
-          <SignupForm isSignUp={isSignUp} />
+    <div className="bg-gradient-to-br bg-cover bg-center bg-no-repeat relative w-full h-screen overflow-hidden from-emerald-50 to-teal-50 "
+        style={{
+          backgroundImage: "url(/images/website/Index-background.png)",
+        }}>
+      <Navbar />
+      <div className="flex flex-col items-center justify-center py-12 px-4 text-center"
+      >
+        <div className="max-w-4xl w-full space-y-8">
+          {/* Hero Section */}
+          <div className="space-y-4">
+            <h1 className="text-5xl sm:text-6xl font-bold text-gray-900">
+              مرحباً بك في الطيف
+            </h1>
+            <p className="text-xl text-gray-600 max-w-2xl mx-auto">
+              قصص مخصصة للأطفال من طيف التوحد – ابدأ مغامرتك الآن!
+            </p>
+          </div>
 
-          <Overlay
-            isSignUp={isSignUp}
-            toggleSignIn={toggleSignIn}
-            toggleSignUp={toggleSignUp}
-          />
-        </div>
-
-        {/* About Link */}
-        <div className="text-center mt-8">
+          {/* Play Button - Guest Access */}
           <Link
-            to="/about"
-            className="text-emerald-600 hover:text-emerald-700 text-sm underline"
+            to="/gamepage"
+            className="inline-block bg-emerald-500 text-white px-8 py-4 rounded-lg font-bold text-xl hover:bg-emerald-600 transition-colors shadow-lg transform hover:scale-105"
           >
-            وصف مشروعنا
+             العب الآن (بدون تسجيل)
           </Link>
+
+          {/* Footer About Link */}
+          <div className="text-center">
+            <Link
+              to="/about"
+              className="text-emerald-600 hover:text-emerald-700 text-sm underline"
+            >
+              تعرف على المشروع
+            </Link>
+          </div>
         </div>
       </div>
     </div>
