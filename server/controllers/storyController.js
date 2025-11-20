@@ -64,7 +64,8 @@ export const generateStory = async (req, res) => {
     const paragraphs = storyText
       .split(/\n+/)
       .map((p) => p.trim())
-      .filter(Boolean).slice(0, 2); // keep sane limit
+      .filter(Boolean)
+      .slice(0, 2); // keep sane limit
 
     // 2. Generate Image Prompts & Structures
     const scenes = paragraphs.map((p, i) => ({
@@ -75,43 +76,24 @@ export const generateStory = async (req, res) => {
 
     // 3. GENERATE IMAGES FOR EACH SCENE
     // await fs.mkdir(IMAGE_DIR, { recursive: true });
+    // 3. CONSTRUCT IMAGE URLs (No downloading needed!)
 
     for (let i = 0; i < scenes.length; i++) {
       const scene = scenes[i];
 
-      // OPTIONAL: Translate prompt if you want, but Pollinations understands basic Arabic/English mixed.
-      // It's still safer to use your englishPrompt logic.
+      // Translate the prompt
       const englishPrompt = await translatePrompt(scene.prompt, ai);
 
-      console.log(`[Scene ${i + 1}] Generating image via Pollinations...`);
+      // Create a random seed to ensure the image stays the same if they refresh
+      const seed = Math.floor(Math.random() * 10000);
 
-      // Create a unique filename
-      const filename = `story_scene_${Date.now()}_${i}.jpeg`;
-      // const filePath = path.join(IMAGE_DIR, filename);
+      // Construct the URL directly.
+      // The frontend will load this URL inside the <img src="..." /> tag.
+      scene.imageUrl = `https://image.pollinations.ai/prompt/${encodeURIComponent(
+        englishPrompt
+      )}?width=1280&height=720&model=flux&seed=${seed}`;
 
-      try {
-        // Pollinations URL structure: https://image.pollinations.ai/prompt/{encodedPrompt}
-        const imageUrl = `https://image.pollinations.ai/prompt/${encodeURIComponent(
-          englishPrompt
-        )}?width=1280&height=720&model=flux`;
-
-        // Fetch the image as a stream/buffer
-        const response = await axios({
-          method: "GET",
-          url: imageUrl,
-          responseType: "arraybuffer", // Important for images
-        });
-
-        // // Save file
-        // await fs.writeFile(filePath, response.data);
-
-        // // Set public URL
-        // scene.imageUrl = `/story_images/${filename}`;
-      } catch (imgErr) {
-        console.error(`Error generating image for scene ${i}:`, imgErr.message);
-        // Fallback placeholder if generation fails
-        scene.imageUrl = "/images/placeholder.jpg";
-      }
+      console.log(`[Scene ${i + 1}] Image URL ready: ${scene.imageUrl}`);
     }
 
     return res.json({ success: true, storyText, scenes });
@@ -123,4 +105,4 @@ export const generateStory = async (req, res) => {
       .status(500)
       .json({ message: "Story generation failed", error: String(err) });
   }
-}; 
+};
