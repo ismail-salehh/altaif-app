@@ -87,7 +87,7 @@ export const generateStory = async (req, res) => {
 
       // Create a unique filename
       const filename = `story_scene_${Date.now()}_${i}.jpeg`;
-      const filePath = path.join(IMAGE_DIR, filename);
+      // const filePath = path.join(IMAGE_DIR, filename);
 
       try {
         // Pollinations URL structure: https://image.pollinations.ai/prompt/{encodedPrompt}
@@ -123,4 +123,4 @@ export const generateStory = async (req, res) => {
       .status(500)
       .json({ message: "Story generation failed", error: String(err) });
   }
-};
+}; 
