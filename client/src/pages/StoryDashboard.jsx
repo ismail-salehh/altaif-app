@@ -5,6 +5,9 @@ import api from "../utils/api";
 import { useNavigate } from "react-router-dom";
 import Navbar from "../components/Navbar";
 
+// ⚠️ CHANGE THIS TO YOUR SERVER URL
+const BACKEND_URL = "http://localhost:8000"; 
+
 const StoryDashboard = () => {
   const navigate = useNavigate();
   const [answers, setAnswers] = useState(null);
@@ -15,7 +18,6 @@ const StoryDashboard = () => {
     const saved = localStorage.getItem("gameAnswers");
     if (saved) {
       setAnswers(JSON.parse(saved));
-      // don't remove immediately; optional: localStorage.removeItem('gameAnswers');
     } else {
       navigate("/game");
     }
@@ -30,10 +32,12 @@ const StoryDashboard = () => {
     },
     enabled: !!answers,
     retry: 1,
+    staleTime: Infinity, // Don't refetch automatically
   });
 
+  // Reset to scene 0 when data loads
   useEffect(() => {
-    setCurrentScene(0);
+    if (storyData) setCurrentScene(0);
   }, [storyData]);
 
   const speakStory = () => {
@@ -43,18 +47,18 @@ const StoryDashboard = () => {
     utterance.rate = 0.9;
     setIsPlaying(true);
 
-    let idx = 0;
+    // Simple timer to approximate scene changes based on total text length
+    // (A more advanced version would split audio by paragraph)
+    const totalDuration = storyData.storyText.length * 100; // rough estimate
+    const timePerScene = totalDuration / (storyData.scenes.length || 1);
+
     const interval = setInterval(() => {
-      idx++;
       setCurrentScene((prev) => {
         if (!storyData.scenes) return prev;
         if (prev < storyData.scenes.length - 1) return prev + 1;
         return prev;
       });
-      if (idx > (storyData.scenes?.length || 1) * 2) {
-        clearInterval(interval);
-      }
-    }, 5000);
+    }, 6000); // Switch every 6 seconds roughly
 
     utterance.onend = () => {
       clearInterval(interval);
@@ -64,72 +68,144 @@ const StoryDashboard = () => {
     speechSynthesis.speak(utterance);
   };
 
-  if (!answers) return null; // navigating back handled by effect
-  if (isLoading) return <div className="flex items-center justify-center min-h-screen">جاري إنشاء قصتك...</div>;
+  // Helper to get full image URL
+  const getImageUrl = (path) => {
+    if (!path) return null;
+    if (path.startsWith("http")) return path;
+    return `${BACKEND_URL}${path}`;
+  };
+
+  // Manual Navigation
+  const nextScene = () => {
+    if (currentScene < (storyData?.scenes?.length || 0) - 1) {
+      setCurrentScene(prev => prev + 1);
+    }
+  };
+
+  const prevScene = () => {
+    if (currentScene > 0) {
+      setCurrentScene(prev => prev - 1);
+    }
+  };
+
+  if (!answers) return null;
+  if (isLoading) return <div className="flex items-center justify-center min-h-screen text-xl font-bold text-emerald-600">جاري تأليف قصتك ورسم المشاهد... 🎨</div>;
+  
   if (error) return (
     <div className="flex flex-col items-center justify-center min-h-screen text-red-500">
-      خطأ في إنشاء القصة: {error.message}
-      <div className="mt-4">
-        <button onClick={() => refetch()} className="px-4 py-2 bg-emerald-500 text-white rounded">حاول مرة أخرى</button>
-      </div>
+      <p className="text-xl mb-4">حدث خطأ أثناء إنشاء القصة</p>
+      <button onClick={() => refetch()} className="px-6 py-2 bg-emerald-500 text-white rounded-full hover:bg-emerald-600 transition">حاول مرة أخرى</button>
     </div>
   );
 
   const { storyText, scenes = [] } = storyData;
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-emerald-50 to-teal-50 p-4" dir="rtl">
+    <div className="min-h-screen bg-gradient-to-br from-emerald-50 to-teal-50 pb-10" dir="rtl">
       <Navbar />
-      <div className="max-w-4xl mx-auto mt-8 space-y-6">
-        <div className="text-center">
-          <button onClick={speakStory} disabled={isPlaying} className="bg-emerald-500 text-white px-8 py-4 rounded-lg font-bold text-xl">
-            {isPlaying ? "جاري التشغيل..." : "شغّل القصة"}
+      <div className="max-w-4xl mx-auto mt-8 px-4 space-y-6">
+        
+        {/* Header & Audio Controls */}
+        <div className="text-center space-y-4">
+          <h1 className="text-3xl md:text-4xl font-bold text-teal-700">قصة: {answers.heroName || "البطل"}</h1>
+          <button 
+            onClick={speakStory} 
+            disabled={isPlaying} 
+            className={`px-8 py-3 rounded-full font-bold text-lg shadow-lg transition-all transform hover:scale-105 ${isPlaying ? "bg-gray-400 cursor-not-allowed" : "bg-orange-500 text-white hover:bg-orange-600"}`}
+          >
+            {isPlaying ? "🔊 جاري القراءة..." : "▶️ استمع للقصة"}
           </button>
         </div>
 
-        <div className="bg-white rounded-3xl shadow-2xl p-6 md:p-10 animate-fade-in">
-          <h1 className="text-4xl md:text-5xl font-bold text-teal-600 text-center mb-6">هذه هي قصتك!</h1>
-
-          <div className="relative overflow-hidden rounded-2xl mb-6">
-            <div className="flex transition-transform duration-500" style={{ transform: `translateX(-${currentScene * 100}%)` }}>
+        <div className="bg-white rounded-3xl shadow-2xl p-4 md:p-8">
+          
+          {/* --- CAROUSEL SECTION --- */}
+          {/* We use dir="ltr" here strictly for the slider math to work correctly */}
+          <div className="relative overflow-hidden rounded-2xl bg-gray-100 mb-6 aspect-video group" dir="ltr">
+            
+            <div 
+              className="flex transition-transform duration-500 ease-out h-full" 
+              style={{ transform: `translateX(-${currentScene * 100}%)` }}
+            >
               {scenes.map((scene, idx) => (
-                <div key={idx} className="w-full flex-shrink-0">
-                  {/* If you later generate images on the backend, scene.imageUrl should be available */}
+                <div key={idx} className="w-full flex-shrink-0 h-full relative">
                   {scene.imageUrl ? (
-                    <img src={scene.imageUrl} alt={`scene-${idx}`} className="w-full h-64 object-cover rounded-lg" />
+                    <img 
+                      src={getImageUrl(scene.imageUrl)} 
+                      alt={`Scene ${idx + 1}`} 
+                      className="w-full h-full object-cover"
+                      onError={(e) => {
+                         e.target.onerror = null; 
+                         e.target.src = "https://via.placeholder.com/800x450?text=Image+Loading+Error";
+                      }}
+                    />
                   ) : (
-                    <div className="w-full h-64 bg-gray-200 rounded-lg flex items-center justify-center">
-                      <p className="text-gray-600 px-4">{scene.paragraph}</p>
+                    <div className="w-full h-full flex items-center justify-center bg-teal-100 text-teal-800 p-8 text-center">
+                      <p className="text-xl font-arabic">{scene.paragraph}</p>
                     </div>
                   )}
-                  <p className="text-center text-gray-700 mt-2">{scene.paragraph}</p>
+                  
+                  {/* Caption Overlay */}
+                  <div className="absolute bottom-0 left-0 right-0 bg-black/60 text-white p-4 text-right" dir="rtl">
+                    <p className="text-sm md:text-base line-clamp-2">{scene.paragraph}</p>
+                  </div>
                 </div>
               ))}
             </div>
 
+            {/* Navigation Arrows (Only visible if > 1 scene) */}
             {scenes.length > 1 && (
-              <div className="absolute bottom-4 left-1/2 transform -translate-x-1/2 flex space-x-2">
-                {scenes.map((_, idx) => (
-                  <button key={idx} onClick={() => setCurrentScene(idx)} className={`w-3 h-3 rounded-full ${idx === currentScene ? "bg-teal-600" : "bg-gray-300"}`} />
-                ))}
-              </div>
+              <>
+                {/* Left Arrow (Previous) */}
+                <button 
+                  onClick={prevScene}
+                  disabled={currentScene === 0}
+                  className="absolute left-4 top-1/2 -translate-y-1/2 bg-white/80 hover:bg-white text-teal-800 p-2 rounded-full shadow-lg disabled:opacity-30 z-10"
+                >
+                  ◀
+                </button>
+                
+                {/* Right Arrow (Next) */}
+                <button 
+                  onClick={nextScene}
+                  disabled={currentScene === scenes.length - 1}
+                  className="absolute right-4 top-1/2 -translate-y-1/2 bg-white/80 hover:bg-white text-teal-800 p-2 rounded-full shadow-lg disabled:opacity-30 z-10"
+                >
+                  ▶
+                </button>
+              </>
             )}
+
+            {/* Dots Indicator */}
+            <div className="absolute top-4 left-1/2 transform -translate-x-1/2 flex space-x-2 z-10">
+              {scenes.map((_, idx) => (
+                <button
+                  key={idx}
+                  onClick={() => setCurrentScene(idx)}
+                  className={`w-3 h-3 rounded-full transition-all shadow ${
+                    idx === currentScene ? "bg-orange-500 scale-125" : "bg-white/70 hover:bg-white"
+                  }`}
+                />
+              ))}
+            </div>
+          </div>
+          {/* --- END CAROUSEL --- */}
+
+          {/* Full Text Display */}
+          <div className="prose max-w-none text-gray-700 text-lg leading-relaxed whitespace-pre-line text-right font-arabic">
+            {storyText}
           </div>
 
-          <div className="prose max-w-none text-gray-700 text-lg leading-relaxed whitespace-pre-wrap">{storyText}</div>
-
-          <div className="text-center mt-10">
-            <button onClick={() => navigate("/game")} className="flex items-center gap-3 mx-auto bg-orange-500 text-white font-bold py-3 px-8 rounded-full shadow-lg">
-              🔄 العب مرة أخرى
+          <div className="text-center mt-10 border-t pt-6">
+            <button 
+              onClick={() => navigate("/game")} 
+              className="bg-teal-600 text-white font-bold py-3 px-8 rounded-full hover:bg-teal-700 transition shadow-lg"
+            >
+              🔄 اصنع قصة جديدة
             </button>
           </div>
         </div>
       </div>
-
-      <style jsx>{`
-        @keyframes fade-in { from { opacity: 0; transform: translateY(20px);} to { opacity: 1; transform: translateY(0);} }
-        .animate-fade-in { animation: fade-in 0.6s ease-out; }
-      `}</style>
     </div>
   );
 };

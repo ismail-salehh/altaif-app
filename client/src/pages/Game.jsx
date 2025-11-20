@@ -60,7 +60,7 @@ const Game = () => {
     localStorage.setItem("gameAnswers", JSON.stringify(selectedAnswers));
 
     setCurrentBranch({
-      question: "! هيا لنستمع لهذه القصة معا",
+      question: "! يلا نسمع هاي القصة سوا",
       options: [],
     });
 
