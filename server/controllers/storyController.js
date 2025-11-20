@@ -1,7 +1,7 @@
 // server/controllers/storyController.js
 import { GoogleGenAI } from "@google/genai"; // 1. Import GoogleGenAI
 import { storyPrompt, imagePrompt } from "../utils/storyGen.js"; // adjust path if different
-import fs from "fs/promises"; // 👈 For file saving
+// import fs from "fs/promises"; // 👈 For file saving
 import path from "path"; // 👈 For resolving paths
 import axios from "axios"; // 👈 For HTTP requests
 
@@ -12,8 +12,7 @@ const ai = new GoogleGenAI({
 
 // A good model for fast text generation like story paragraphs
 const STORY_MODEL = "gemini-2.0-flash";
-const IMAGE_MODEL = "imagen-3.0-generate-002"; // 👈 The correct Image Model
-const IMAGE_DIR = path.join(process.cwd(), "client", "public", "story_images");
+// const IMAGE_DIR = path.join(process.cwd(), "client", "public", "story_images");
 
 async function translatePrompt(arabicPrompt, ai) {
   const translationSystemInstruction = `You are a professional language translator. Your sole task is to take the provided Arabic text, which is an image prompt, and translate it into a concise, detailed, high-quality English image prompt. Do not add any conversational text, explanations, or formatting. Only return the English prompt text.`;
@@ -75,7 +74,7 @@ export const generateStory = async (req, res) => {
     }));
 
     // 3. GENERATE IMAGES FOR EACH SCENE
-    await fs.mkdir(IMAGE_DIR, { recursive: true });
+    // await fs.mkdir(IMAGE_DIR, { recursive: true });
 
     for (let i = 0; i < scenes.length; i++) {
       const scene = scenes[i];
@@ -103,11 +102,11 @@ export const generateStory = async (req, res) => {
           responseType: "arraybuffer", // Important for images
         });
 
-        // Save file
-        await fs.writeFile(filePath, response.data);
+        // // Save file
+        // await fs.writeFile(filePath, response.data);
 
-        // Set public URL
-        scene.imageUrl = `/story_images/${filename}`;
+        // // Set public URL
+        // scene.imageUrl = `/story_images/${filename}`;
       } catch (imgErr) {
         console.error(`Error generating image for scene ${i}:`, imgErr.message);
         // Fallback placeholder if generation fails
