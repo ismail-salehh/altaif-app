@@ -1,61 +1,46 @@
-// import { GoogleGenerativeAI } from '@google/generative-ai';
-// //const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY);
-// import textToSpeech from '@google-cloud/text-to-speech';
-// import fs from 'fs';
-// import path from 'path';
-// import { Storage } from '@google-cloud/storage';
+// server/controllers/storyController.js
+import OpenAI from "openai";
+import { storyPrompt, imagePrompt } from "../utils/storyGen.js"; // adjust path if different
 
-// const ttsClient = new textToSpeech.TextToSpeechClient();
-// import storyGen from '../utils/storyGenerationPrompts.js';
+const client = new OpenAI({
+    apiKey: process.env.OPENAI_API_KEY,
+});
 
-// // @desc Generate story from game answers
-// // @route POST /api/story/generate
-// const generateStory = async (req, res) => {
-//   try {
-//     const { answers } = req.body;
+export const generateStory = async (req, res) => {
+  try {
+    const { answers } = req.body;
+    if (!answers) {
+      return res.status(400).json({ message: "No answers provided" });
+    }
 
-//     if (!answers || !Array.isArray(answers)) {
-//       return res.status(400).json({ message: 'No answers provided' });
-//     }
+    const prompt = storyPrompt(answers);
 
-//     // Step 1: Generate story text (split into 4-6 paragraphs/scenes)
-//     //const model = genAI.getGenerativeModel({ model: 'gemini-1.5-flash' });
-//     const storyPrompt = storyGen.storyPrompt(answers); // From utils
-//     //const storyResult = await model.generateContent(storyPrompt);
-//     //const storyText = storyResult.response.text().trim();
+    // Use Responses or Chat Completions depending on SDK; below uses chat-like call
+    const response = await client.chat.completions.create({
+      model: "gpt-4o-mini",
+      messages: [{ role: "user", content: prompt }],
+      max_tokens: 800,
+    });
 
-//     const paragraphs = storyText.split('\n\n').slice(0, 6); // Up to 6 scenes
+    const storyText = response.choices?.[0]?.message?.content?.trim();
+    if (!storyText) {
+      return res.status(500).json({ message: "Empty story from model" });
+    }
 
-//     // Step 2: Generate images for each paragraph
-//     const scenes = [];
-//     for (let i = 0; i < paragraphs.length; i++) {
-//       const imagePrompt = storyGen.imagePrompt(paragraphs[i], answers, i + 1);
-//       const imageResult = await model.generateContent(imagePrompt, {
-//         generationConfig: { responseMimeType: 'image/png', candidateCount: 1 }, // Single high-quality
-//       });
-//       const imageBytes = await imageResult.response.imageData(); // Base64 or buffer
-//       scenes.push({
-//         imageUrl: `data:image/png;base64,${imageBytes.toString('base64')}`, // Inline for frontend
-//         text: paragraphs[i],
-//       });
-//     }
+    const paragraphs = storyText
+      .split(/\n+/)
+      .map((p) => p.trim())
+      .filter(Boolean)
+      .slice(0, 8); // keep sane limit
 
-//     // Step 3: Generate TTS audio
-//     const audioRequest = {
-//       input: { text: storyText },
-//       voice: { languageCode: 'ar-SA', name: 'ar-SA-Standard-A' }, // Arabic voice
-//       audioConfig: { audioEncoding: 'MP3' },
-//     };
-//     const [audioResponse] = await ttsClient.synthesizeSpeech(audioRequest);
-//     const audioPath = path.join(__dirname, '../temp/story-audio.mp3');
-//     fs.writeFileSync(audioPath, audioResponse.audioContent, 'binary');
-//     const audioUrl = `/assets/story/story-audio.mp3`; // Serve via static in server.js
+    const scenes = paragraphs.map((p, i) => ({
+      paragraph: p,
+      prompt: imagePrompt(p, answers, i + 1),
+    }));
 
-//     res.json({ storyText, scenes, audioUrl });
-//   } catch (err) {
-//     console.error('Story gen error:', err);
-//     res.status(500).json({ message: 'Failed to generate story' });
-//   }
-// };
-
-// export default { generateStory };
+    return res.json({ success: true, storyText, scenes });
+  } catch (err) {
+    console.error("Story generate error:", err);
+    return res.status(500).json({ message: "Story generation failed", error: String(err) });
+  }
+};

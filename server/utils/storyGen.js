@@ -20,4 +20,4 @@ const imagePrompt = (paragraph, answers, sceneNum) => `
 ألوان زاهية، أفقي، مناسب للأطفال.
 `;
 
-module.exports = { storyPrompt, imagePrompt, formatAnswers };
+export { storyPrompt, imagePrompt, formatAnswers };

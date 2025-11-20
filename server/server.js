@@ -4,7 +4,7 @@ import cors from "cors";
 import cookieParser from "cookie-parser";  // Already imported
 import { connectDB } from "./config/db.js";
 import authRoutes from "./routes/authRoutes.js";
-// import storyRoutes from "./routes/storyRoutes.js";
+import storyRoutes from "./routes/storyRoutes.js";
 import path from "path";
 
 dotenv.config();
@@ -13,7 +13,7 @@ const app = express();
 
 // : Full CORS + credentials
 app.use(cors({
-  origin: process.env.NODE_ENV === "production" ? "https://altaif-app.onrender.com" : "http://localhost:8000",  // Match your Vite port exactly!
+  origin: process.env.NODE_ENV === "production" ? "https://altaif-app.onrender.com" : "http://localhost:3000",  // Match your Vite port exactly!
   credentials: true
 }));
 
@@ -23,8 +23,7 @@ app.use(express.json());
 
 // Routes
 app.use("/api/auth", authRoutes);
-// app.use("/api/story", storyRoutes);
-// app.use('/assets/story', express.static(path.join(__dirname, 'temp'))); // Serve generated audio
+app.use("/api/story", storyRoutes);
 
 // serve frontend
 if (process.env.NODE_ENV === "production") {
