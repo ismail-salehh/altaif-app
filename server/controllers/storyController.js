@@ -2,8 +2,8 @@
 import { GoogleGenAI } from "@google/genai"; // 1. Import GoogleGenAI
 import { storyPrompt, imagePrompt } from "../utils/storyGen.js"; // adjust path if different
 // import fs from "fs/promises"; // 👈 For file saving
-import path from "path"; // 👈 For resolving paths
-import axios from "axios"; // 👈 For HTTP requests
+// import path from "path"; // 👈 For resolving paths
+// import axios from "axios"; // 👈 For HTTP requests
 
 // 2. Initialize the Gemini client
 const ai = new GoogleGenAI({

@@ -1,7 +1,5 @@
-import React, { useEffect, useState, useRef, useContext } from "react";
-import { useMutation, useQueryClient } from "@tanstack/react-query"; // Added missing imports
+import { useEffect, useState, useRef, useContext } from "react";
 import { gameData } from "../utils/gameData.js";
-import { AuthContext } from "../context/AuthContext.jsx";
 import { useNavigate } from "react-router-dom";
 import Navbar from "../components/Navbar.jsx";
 
@@ -17,15 +15,24 @@ const Game = () => {
 
   const currentNode = currentBranch || questions[currentIndex];
 
-  const playSound = (filename) => {
+  const playSound = (filename, type) => {
     if (!filename) return;
-    const audio = new Audio(`/sounds/${filename}.mp3`);
+    switch (type) {
+      case "question":
+        var audio = new Audio(`/sounds/questions/${filename}.mp3`);
+        break;
+      case "choice":
+        var audio = new Audio(`/sounds/choices/${filename}.mp3`);
+        break;
+      default:
+        return;
+    }
     audio.play().catch(() => {});
   };
 
   useEffect(() => {
     if (currentNode?.soundname) {
-      playSound(currentNode.soundname.toLowerCase());
+      playSound(currentNode.soundname, "question");
     }
   }, [currentIndex, currentBranch]);
 
@@ -64,6 +71,8 @@ const Game = () => {
       options: [],
     });
 
+    playSound("end", "question");
+    
     // Navigate after short delay
     setTimeout(() => {
       navigate("/story-dashboard");
@@ -101,7 +110,7 @@ const Game = () => {
               <button
                 key={index}
                 onClick={() => handleChoice(option.choice)}
-                onMouseEnter={() => playSound(choiceSound)}
+                onMouseEnter={() => playSound(choiceSound, "choice")}
                 style={{ animationDelay: `${index * 0.2}s` }}
                 className="relative w-[160px] h-[160px] sm:w-[220px] sm:h-[220px] md:w-[300px] md:h-[300px] rounded-full overflow-hidden border-2 border-sky-500 shadow-md hover:scale-110 hover:shadow-lg transition-transform duration-300 ease-out"
               >
