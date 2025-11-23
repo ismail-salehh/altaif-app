@@ -65,7 +65,7 @@ export const generateStory = async (req, res) => {
       .split(/\n+/)
       .map((p) => p.trim())
       .filter(Boolean)
-      .slice(0, 2); // keep sane limit
+      .slice(0, 5); // keep sane limit
 
     // 2. Generate Image Prompts & Structures
     const scenes = paragraphs.map((p, i) => ({

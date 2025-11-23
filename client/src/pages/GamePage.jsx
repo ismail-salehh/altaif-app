@@ -23,21 +23,26 @@ const GamePage = () => {
 
   if (isGuest) {
     return (
-      <div className="min-h-screen bg-gray-100">
+      <div
+      className="relative w-full min-h-screen bg-cover bg-center bg-no-repeat overflow-hidden bg-black text-white font-comic-sans"
+      style={{
+        backgroundImage: "url(/images/website/gamapage-bg.jpg)",
+      }}
+    >
         <Navbar />
-        <div className="flex flex-col items-center justify-center min-h-screen gap-6">
+        <div className="flex flex-col items-center justify-center h-100 gap-6">
           <h1 className="text-2xl font-bold text-gray-800 mb-4">اختر طريقة اللعب</h1>
 
           <button
             onClick={() => navigate("/game")}
-            className="bg-emerald-500 text-white px-6 py-3 rounded-lg text-lg hover:bg-emerald-600 transition"
+            className="bg-emerald-500 border-4 border-emerald-700 text-emerald-900 font-bold px-6 py-3 rounded-lg text-lg hover:bg-emerald-600 transition"
           >
             العب مباشرة كضيف
           </button>
 
           <button
             onClick={() => setShowAuthModal(true)}
-            className="text-emerald-600 underline text-lg hover:text-emerald-700"
+            className="text-emerald-700 underline text-lg hover:text-emerald-900"
           >
             تسجيل الدخول أو إنشاء حساب
           </button>
