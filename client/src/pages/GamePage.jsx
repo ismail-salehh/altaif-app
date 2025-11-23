@@ -3,7 +3,6 @@ import React, { useContext, useState } from "react";
 import Navbar from "../components/Navbar";
 import Game from "./Game";
 import { useNavigate } from "react-router-dom";
-import AuthModal from "./AuthModal";
 import { AuthContext } from "../context/AuthContext";
 
 const GamePage = () => {
@@ -11,7 +10,6 @@ const GamePage = () => {
   const { user, isAuthLoading } = useContext(AuthContext);
 
   const isGuest = !user;
-  const [showAuthModal, setShowAuthModal] = useState(false);
 
   if (isAuthLoading) {
     return (
@@ -41,14 +39,13 @@ const GamePage = () => {
           </button>
 
           <button
-            onClick={() => setShowAuthModal(true)}
+            onClick={() => navigate("/login")}
             className="text-emerald-700 underline text-lg hover:text-emerald-900"
           >
             تسجيل الدخول أو إنشاء حساب
           </button>
         </div>
 
-        {showAuthModal && <AuthModal onClose={() => setShowAuthModal(false)} />}
       </div>
     );
   }

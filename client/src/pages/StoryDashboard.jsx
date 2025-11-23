@@ -130,7 +130,6 @@ const StoryDashboard = () => {
           
           {/* Header & Audio Controls */}
           <div className="text-center space-y-4">
-            <h1 className="text-3xl md:text-4xl font-bold text-teal-700">قصة: {answers.heroName || "البطل"}</h1>
             <button 
               onClick={speakStory} 
               disabled={isPlaying} 

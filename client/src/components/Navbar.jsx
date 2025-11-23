@@ -49,7 +49,10 @@ const Navbar = () => {
     //add margin between buttons in the navbar
     <nav className="bg-opacity-100 shadow-md p-4 flex justify-between items-center ">
       {/* Logo and Home Link */}
-      <Link to="/" className="text-2xl font-bold text-emerald-600">
+      <Link
+        to="/"
+        className="bg-pink-500 px-2 py-2  rounded-3xl text-2xl font-bold text-white"
+      >
         <img
           src="/StoryLogo.png"
           alt="Logo"
@@ -59,46 +62,42 @@ const Navbar = () => {
       </Link>
 
       {/* About */}
-        <div className="flex items-center gap-4 space-x-4 space-x-reverse">
-          {!window.location.pathname.startsWith("/game") && (
-            <Link
-          to="/gamepage"
-          className="bg-emerald-500 text-white px-4 py-2 rounded hover:bg-emerald-600 transition-colors"
-            >
-          العب
-            </Link>
-          )}
+      <div className="flex items-center gap-4 space-x-4 space-x-reverse">
+        {!window.location.pathname.startsWith("/game") && (
+          <Link
+            to="/gamepage"
+            className="bg-emerald-500 text-white px-4 py-2 rounded-3xl hover:bg-emerald-600 transition-colors"
+          >
+            العب
+          </Link>
+        )}
 
-          {authUser ? (
-            <>
-          <span>مرحباً، {authUser.name}!</span>
+        {authUser ? (
           <button
             onClick={() => logoutMutation()} // Added () to call mutate properly
             disabled={isPending} // Disable during logout
             title={isPending ? "جاري تسجيل الخروج..." : "تسجيل الخروج"}
-            className="text-red-600 hover:underline"
+            className="bg-white px-4 py-2 text-red-600 hover:underline"
           >
             تسجيل الخروج
           </button>
-            </>
-          ) : (
-            <>
-          <button
-            onClick={() => navigate("/login")}
-            className="text-emerald-600 hover:underline"
-          >
-            تسجيل الدخول
-          </button>
-          <button
-            onClick={() => navigate("/login")}
-            className="bg-emerald-500 text-white px-4 py-2 rounded hover:bg-emerald-600 transition-colors"
-          >
-            إنشاء حساب
-          </button>
-            </>
-          )}
-        </div>
-
+        ) : (
+          <>
+            <button
+              onClick={() => navigate("/login")}
+              className="bg-white rounded-3xl px-4 py-2 text-emerald-600 hover:bg-emerald-800 transition-colors"
+            >
+              تسجيل الدخول
+            </button>
+            <button
+              onClick={() => navigate("/login")}
+              className="bg-emerald-800 text-white px-4 py-2 rounded-3xl hover:bg-emerald-600 transition-colors"
+            >
+              إنشاء حساب
+            </button>
+          </>
+        )}
+      </div>
     </nav>
   );
 };
