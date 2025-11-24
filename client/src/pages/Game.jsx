@@ -81,7 +81,7 @@ const Game = () => {
 
   return (
     <div
-      className="opacity-50 relative w-full h-screen bg-cover bg-center bg-no-repeat overflow-hidden bg-black text-white font-comic-sans"
+      className="relative w-full h-screen bg-cover bg-center bg-no-repeat overflow-hidden bg-black text-white font-comic-sans"
       style={{
         backgroundImage: "url(/images/game/background.jpg)",
       }}
