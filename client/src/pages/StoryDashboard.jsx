@@ -6,7 +6,7 @@ import { useNavigate } from "react-router-dom";
 import Navbar from "../components/Navbar";
 
 // ⚠️ CHANGE THIS TO YOUR SERVER URL
-const BACKEND_URL = "http://localhost:8000"; 
+const BACKEND_URL = "http://localhost:8000";
 
 const StoryDashboard = () => {
   const navigate = useNavigate();
@@ -23,7 +23,12 @@ const StoryDashboard = () => {
     }
   }, [navigate]);
 
-  const { data: storyData, isLoading, error, refetch } = useQuery({
+  const {
+    data: storyData,
+    isLoading,
+    error,
+    refetch,
+  } = useQuery({
     queryKey: ["story", answers],
     queryFn: async () => {
       if (!answers) throw new Error("No answers");
@@ -78,44 +83,54 @@ const StoryDashboard = () => {
   // Manual Navigation
   const nextScene = () => {
     if (currentScene < (storyData?.scenes?.length || 0) - 1) {
-      setCurrentScene(prev => prev + 1);
+      setCurrentScene((prev) => prev + 1);
     }
   };
 
   const prevScene = () => {
     if (currentScene > 0) {
-      setCurrentScene(prev => prev - 1);
+      setCurrentScene((prev) => prev - 1);
     }
   };
 
   if (!answers) return null;
-  if (isLoading) return (
-    <div className="relative min-h-screen flex items-center justify-center text-xl font-bold text-emerald-600">
-      <video
-        autoPlay
-        muted
-        loop
-        playsInline
-        className="absolute inset-0 w-full h-full object-cover"
-        src="/videos/generating-story-bg.mp4"
-      />
-      <h2 className="relative z-10 text-white">
-        جاري تأليف قصتك ورسم المشاهد ...
-      </h2>
-    </div>
-  );
-  
-  if (error) return (
-    <div className="flex flex-col bg-teal-300 items-center justify-center min-h-screen text-red-500 font-bold">
-      <p className="text-xl mb-4">حدث خطأ أثناء إنشاء القصة</p>
-      <button onClick={() => refetch()} className="px-6 py-2 bg-emerald-700 text-white rounded-full hover:bg-emerald-900 transition">حاول مرة أخرى</button>
-    </div>
-  );
+  if (isLoading)
+    return (
+      <div className="relative min-h-screen flex items-center justify-center text-xl font-bold text-emerald-600">
+        <video
+          autoPlay
+          muted
+          loop
+          playsInline
+          className="absolute inset-0 w-full h-full object-cover"
+          src="/videos/generating-story-bg.mp4"
+        />
+        <h2 className="relative z-10 text-white">
+          جاري تأليف قصتك ورسم المشاهد ...
+        </h2>
+      </div>
+    );
+
+  if (error)
+    return (
+      <div className="flex flex-col bg-teal-300 items-center justify-center min-h-screen text-red-500 font-bold">
+        <p className="text-xl mb-4">حدث خطأ أثناء إنشاء القصة</p>
+        <button
+          onClick={() => refetch()}
+          className="px-6 py-2 bg-emerald-700 text-white rounded-full hover:bg-emerald-900 transition"
+        >
+          حاول مرة أخرى
+        </button>
+      </div>
+    );
 
   const { storyText, scenes = [] } = storyData;
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-emerald-50 to-teal-50 pb-10 relative overflow-hidden" dir="rtl">
+    <div
+      className="min-h-screen bg-gradient-to-br from-emerald-50 to-teal-50 pb-10 relative overflow-hidden"
+      dir="rtl"
+    >
       <video
         autoPlay
         muted
@@ -127,49 +142,67 @@ const StoryDashboard = () => {
       <div className="relative z-10">
         <Navbar />
         <div className="max-w-4xl mx-auto mt-8 px-4 space-y-6">
-          
           {/* Header & Audio Controls */}
           <div className="text-center space-y-4">
-            <button 
-              onClick={speakStory} 
-              disabled={isPlaying} 
-              className={`px-8 py-3 rounded-full font-bold text-lg shadow-lg transition-all transform hover:scale-105 ${isPlaying ? "bg-gray-400 cursor-not-allowed" : "bg-orange-500 text-white hover:bg-orange-600"}`}
+            <button
+              onClick={speakStory}
+              disabled={isPlaying}
+              className={`px-8 py-3 rounded-full font-bold text-lg shadow-lg transition-all transform hover:scale-105 ${
+                isPlaying
+                  ? "bg-gray-400 cursor-not-allowed"
+                  : "bg-orange-500 text-white hover:bg-orange-600"
+              }`}
             >
               {isPlaying ? "🔊 جاري القراءة..." : "▶️ استمع للقصة"}
             </button>
           </div>
 
           <div className="bg-white rounded-3xl shadow-2xl p-4 md:p-8">
-            
             {/* --- CAROUSEL SECTION --- */}
             {/* We use dir="ltr" here strictly for the slider math to work correctly */}
-            <div className="relative overflow-hidden rounded-2xl bg-gray-100 mb-6 aspect-video group" dir="ltr">
-              
-              <div 
-                className="flex transition-transform duration-500 ease-out h-full" 
+            <div
+              className="relative overflow-hidden rounded-2xl bg-gray-100 mb-6 h-[75vh] group"
+              dir="ltr"
+            >
+              <div
+                className="flex transition-transform duration-500 ease-out h-full"
                 style={{ transform: `translateX(-${currentScene * 100}%)` }}
               >
                 {scenes.map((scene, idx) => (
-                  <div key={idx} className="w-full flex-shrink-0 h-full relative">
+                  <div
+                    key={idx}
+                    className="w-full flex-shrink-0 h-full relative"
+                  >
                     {scene.imageUrl ? (
-                      <img 
-                        src={getImageUrl(scene.imageUrl)} 
-                        alt={`Scene ${idx + 1}`} 
+                      <img
+                        src={getImageUrl(scene.imageUrl)}
+                        alt={`Scene ${idx + 1}`}
                         className="w-full h-full object-cover"
                         onError={(e) => {
-                           e.target.onerror = null; 
-                           e.target.src = "https://via.placeholder.com/800x450?text=Image+Loading+Error";
+                          e.target.onerror = null;
+                          e.target.src =
+                            "https://via.placeholder.com/800x450?text=Image+Loading+Error";
                         }}
                       />
                     ) : (
-                      <div className="w-full h-full flex items-center justify-center bg-teal-100 text-teal-800 p-8 text-center">
-                        <p className="text-xl font-arabic">{scene.paragraph}</p>
+                      <div
+                        className="absolute bottom-0 left-0 right-0 bg-black/50 backdrop-blur-sm text-white p-6 text-right"
+                        dir="rtl"
+                      >
+                        <p className="text-base md:text-xl leading-relaxed">
+                          {scene.paragraph}
+                        </p>
                       </div>
                     )}
-                    
+
                     {/* Caption Overlay */}
-                    <div className="absolute bottom-0 left-0 right-0 bg-black/60 text-white p-4 text-right" dir="rtl">
-                      <p className="text-sm md:text-base line-clamp-2">{scene.paragraph}</p>
+                    <div
+                      className="absolute bottom-0 left-0 right-0 bg-black/60 text-white p-4 text-right"
+                      dir="rtl"
+                    >
+                      <p className="text-sm md:text-base line-clamp-2">
+                        {scene.paragraph}
+                      </p>
                     </div>
                   </div>
                 ))}
@@ -179,16 +212,16 @@ const StoryDashboard = () => {
               {scenes.length > 1 && (
                 <>
                   {/* Left Arrow (Previous) */}
-                  <button 
+                  <button
                     onClick={prevScene}
                     disabled={currentScene === 0}
                     className="absolute left-4 top-1/2 -translate-y-1/2 bg-white/80 hover:bg-white text-teal-800 p-2 rounded-full shadow-lg disabled:opacity-30 z-10"
                   >
                     ◀
                   </button>
-                  
+
                   {/* Right Arrow (Next) */}
-                  <button 
+                  <button
                     onClick={nextScene}
                     disabled={currentScene === scenes.length - 1}
                     className="absolute right-4 top-1/2 -translate-y-1/2 bg-white/80 hover:bg-white text-teal-800 p-2 rounded-full shadow-lg disabled:opacity-30 z-10"
@@ -205,7 +238,9 @@ const StoryDashboard = () => {
                     key={idx}
                     onClick={() => setCurrentScene(idx)}
                     className={`w-3 h-3 rounded-full transition-all shadow ${
-                      idx === currentScene ? "bg-orange-500 scale-125" : "bg-white/70 hover:bg-white"
+                      idx === currentScene
+                        ? "bg-orange-500 scale-125"
+                        : "bg-white/70 hover:bg-white"
                     }`}
                   />
                 ))}
@@ -213,14 +248,9 @@ const StoryDashboard = () => {
             </div>
             {/* --- END CAROUSEL --- */}
 
-            {/* Full Text Display */}
-            <div className="prose max-w-none text-gray-700 text-lg leading-relaxed whitespace-pre-line text-right font-arabic">
-              {storyText}
-            </div>
-
             <div className="text-center mt-10 border-t pt-6">
-              <button 
-                onClick={() => navigate("/game")} 
+              <button
+                onClick={() => navigate("/game")}
                 className="bg-teal-600 text-white font-bold py-3 px-8 rounded-full hover:bg-teal-700 transition shadow-lg"
               >
                 🔄 اصنع قصة جديدة
