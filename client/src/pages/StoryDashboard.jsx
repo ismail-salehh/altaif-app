@@ -6,9 +6,6 @@ import { useNavigate } from "react-router-dom";
 import Navbar from "../components/Navbar";
 import { ChevronLeftIcon, ChevronRightIcon } from "@heroicons/react/24/outline"; // Assuming Heroicons are installed; install via npm if needed
 
-// ⚠️ CHANGE THIS TO YOUR SERVER URL
-const BACKEND_URL = "https://altaif-app.onrender.com";
-
 const StoryDashboard = () => {
   const navigate = useNavigate();
   const [answers, setAnswers] = useState(null);
@@ -78,7 +75,7 @@ const StoryDashboard = () => {
   const getImageUrl = (path) => {
     if (!path) return null;
     if (path.startsWith("http")) return path;
-    return `${BACKEND_URL}${path}`;
+    return `${path}`;
   };
 
   // Manual Navigation
