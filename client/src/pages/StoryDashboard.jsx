@@ -74,8 +74,9 @@ const StoryDashboard = () => {
   // Helper to get full image URL
   const getImageUrl = (path) => {
     if (!path) return null;
+    console.log(path)
     if (path.startsWith("http")) return path;
-    return `${path}`;
+    return `${BACKEND_URL}${path}`;
   };
 
   // Manual Navigation
