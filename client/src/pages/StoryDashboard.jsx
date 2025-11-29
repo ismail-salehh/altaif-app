@@ -7,7 +7,7 @@ import Navbar from "../components/Navbar";
 import { ChevronLeftIcon, ChevronRightIcon } from "@heroicons/react/24/outline"; // Assuming Heroicons are installed; install via npm if needed
 
 // ⚠️ CHANGE THIS TO YOUR SERVER URL
-const BACKEND_URL = "http://localhost:8000";
+const BACKEND_URL = "https://altaif-app.onrender.com";
 
 const StoryDashboard = () => {
   const navigate = useNavigate();
@@ -143,16 +143,16 @@ const StoryDashboard = () => {
       <div className="relative z-10">
         <Navbar />
         {/* Full-screen Carousel Below Navbar */}
-        <div className="w-full h-[calc(100vh-80px)] relative overflow-hidden rounded-b-3xl bg-gray-100 group" dir="ltr">
+        <div
+          className="w-full h-[calc(100vh-80px)] relative overflow-hidden rounded-3xl bg-gray-100 group"
+          dir="ltr"
+        >
           <div
             className="flex transition-transform duration-500 ease-out h-full w-full"
             style={{ transform: `translateX(-${currentScene * 100}%)` }}
           >
             {scenes.map((scene, idx) => (
-              <div
-                key={idx}
-                className="w-full flex-shrink-0 h-full relative"
-              >
+              <div key={idx} className="w-full flex-shrink-0 h-full relative">
                 {scene.imageUrl ? (
                   <img
                     src={getImageUrl(scene.imageUrl)}
@@ -231,28 +231,24 @@ const StoryDashboard = () => {
 
         {/* Controls Below Carousel */}
         <div className="max-w-4xl mx-auto px-4 mt-6 space-y-6">
-          <div className="bg-white rounded-3xl shadow-2xl p-4 md:p-8">
-            <div className="text-center space-y-4 border-t pt-6">
-              <div className="flex justify-center space-x-4 space-x-reverse dir-rtl">
-                <button
-                  onClick={speakStory}
-                  disabled={isPlaying}
-                  className={`px-8 py-3 rounded-full font-bold text-lg shadow-lg transition-all transform hover:scale-105 ${
-                    isPlaying
-                      ? "bg-gray-400 cursor-not-allowed"
-                      : "bg-orange-500 text-white hover:bg-orange-600"
-                  }`}
-                >
-                  {isPlaying ? "🔊 جاري القراءة..." : "▶️ استمع للقصة"}
-                </button>
-                <button
-                  onClick={() => navigate("/game")}
-                  className="bg-teal-600 text-white font-bold py-3 px-8 rounded-full hover:bg-teal-700 transition shadow-lg"
-                >
-                  🔄 اصنع قصة جديدة
-                </button>
-              </div>
-            </div>
+          <div class="flex justify-center space-x-4 dir-rtl">
+            <button
+              onClick={speakStory}
+              disabled={isPlaying}
+              className={`px-8 py-3 rounded-full font-bold text-lg shadow-lg transition-all transform hover:scale-105 ${
+                isPlaying
+                  ? "bg-gray-400 cursor-not-allowed"
+                  : "bg-orange-500 text-white hover:bg-orange-600"
+              }`}
+            >
+              {isPlaying ? "🔊 جاري القراءة..." : "▶️ استمع للقصة"}
+            </button>
+            <button
+              onClick={() => navigate("/game")}
+              className="bg-teal-600 text-white font-bold py-3 px-8 rounded-full hover:bg-teal-700 transition shadow-lg"
+            >
+              🔄 اصنع قصة جديدة
+            </button>
           </div>
         </div>
       </div>
