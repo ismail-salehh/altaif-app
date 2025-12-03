@@ -58,7 +58,7 @@ const Navbar = () => {
           alt="Logo"
           className="h-8 inline-block mr-2"
         />
-        الطيف
+        الطَّيف
       </Link>
 
       {/* About */}
