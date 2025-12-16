@@ -11,7 +11,7 @@ const ai = new GoogleGenAI({
 });
 
 // A good model for fast text generation like story paragraphs
-const STORY_MODEL = "gemini-2.0-flash";
+const STORY_MODEL = "gemini-2.5-flash-lite";
 // const IMAGE_DIR = path.join(process.cwd(), "client", "public", "story_images");
 
 async function translatePrompt(arabicPrompt, ai) {
