@@ -51,7 +51,7 @@ export const generateStory = async (req, res) => {
       model: STORY_MODEL,
       contents: [{ role: "user", parts: [{ text: prompt }] }],
       config: {
-        maxOutputTokens: 2500,
+        maxOutputTokens: 2000,
       },
     });
     console.log(response);
