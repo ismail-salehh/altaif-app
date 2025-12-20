@@ -1,6 +1,6 @@
 // server/controllers/storyController.js
 import { GoogleGenAI } from "@google/genai"; // 1. Import GoogleGenAI
-import { storyPrompt, imagePrompt } from "../utils/storyGen.js"; // adjust path if different
+import { storyPrompt, imagePrompt } from "../utils/storyGen.js";
 
 // 2. Initialize the Gemini client
 const ai = new GoogleGenAI({
