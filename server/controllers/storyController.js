@@ -61,14 +61,12 @@ export const generateStory = async (req, res) => {
       });
 
       storyText = response.text?.trim();
-
       source = "GEMINI";
 
-      if (!storyText) {
-        return res.status(500).json({ message: "Empty story from model" });
-      }
+      if (!storyText) return res.status(500).json({ message: "Empty story from model" });
     }
     englishStoryText = await translatePrompt(storyText, ai);
+    
     // 4. Split into paragraphs
     const paragraphs = storyText
       .split(/\n+/)
@@ -84,15 +82,13 @@ export const generateStory = async (req, res) => {
 
     // 5. Build scenes with prompts
     const scenes = englishParagraphs.map((p) => ({
-      paragraph: p,
+      paragraph: p.split(" ").slice(0, 15).join(" "),
       prompt: imagePrompt(p),
       imageUrl: null,
     }));
 
     for (let i = 0; i < scenes.length; i++) {
-      const sceneText = scenes[i].paragraph.split(" ").slice(0, 15).join(" "); // First 15 words
       const scene = scenes[i];
-      scene.prompt = sceneText;
       const seed = Math.floor(Math.random() * 10000); // Random seed for consistent image generation
       scene.imageUrl = `https://image.pollinations.ai/prompt/${encodeURIComponent(scene.prompt)}?width=1280&height=720&model=flux&seed=${seed}`;
     }
