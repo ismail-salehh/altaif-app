@@ -15,7 +15,6 @@ const questionKeys = [
     "PreferredGame"
 ];
 
-// 2. Define a map for translating the EN choices into AR text for the prompt
 const choiceTranslations = {
     // Q1: Gender
     'boy': 'ولد',
@@ -94,33 +93,17 @@ const choiceTranslations = {
     'PreferredGame': 'اللعبة المفضلة (مؤشر سلوكي)'
 };
 
-/**
- * Converts the raw array of answers into a formatted string for the Gemini prompt.
- * @param {string[]} answers - The array of raw answer strings from the frontend.
- * @returns {string} - A string with key: value pairs, translated to Arabic.
- */
 const formatAnswers = (answers) => {
-    // Ensure we handle non-array inputs gracefully, though it should be an array.
-    if (!Array.isArray(answers)) {
-        return `خطأ في تنسيق الإجابات: ${answers}`;
-    }
+    if (!Array.isArray(answers)) return `خطأ في تنسيق الإجابات: ${answers}`
 
     const formattedLines = answers.map((val, index) => {
         const key = questionKeys[index];
-        if (!key) return null; // Stop if we run out of keys
+        if (!key) return null;
 
-        // Get the Arabic key/label (e.g., "جنس الطفل")
         const keyAr = choiceTranslations[key] || key;
-        
-        // Get the Arabic value/choice (e.g., "ولد"). If not found, use the English value.
         const valueAr = choiceTranslations[val] || val;
+        if (key === 'Age') return `العمر: ${valueAr} سنوات`;
 
-        // Special handling for Age (Q2) since it uses numbers/strings (4, 5, 6, 7+)
-        if (key === 'Age') {
-            return `العمر: ${valueAr} سنوات`;
-        }
-
-        // Return the final formatted line (e.g., "جنس الطفل: ولد")
         return `${keyAr}: ${valueAr}`;
     }).filter(line => line !== null);
 
@@ -131,21 +114,10 @@ const storyPrompt = (answers) => `
 أكتب قصة أطفال مخصصة بالعربية الفصحى البسيطة بناءً على الملامح التفصيلية التالية للطفل:
 ${formatAnswers(answers)}
 
-اجعل القصة تتكون من 4 إلى 6 فقرات. يجب أن تكون القصة إيجابية، وتحتوي على عنصر مغامرة، وتوصل رسالة عاطفية بسيطة. تبدأ القصة بعبارة "كان يا ما كان" وتنتهي بنهاية سعيدة.
+اجعل القصة تتكون من 5 فقرات. يجب أن تكون القصة إيجابية، وتحتوي على عنصر مغامرة، وتوصل رسالة عاطفية بسيطة وتنتهي بنهاية سعيدة.
 `;
 
-const imagePrompt = (paragraph, answers, sceneNum) => `
-صورة كرتونية لطيفة بأسلوب الرسوم المتحركة (cartoon style) للمشهد رقم ${sceneNum} من القصة.
-**المشهد:** "${paragraph}"
-**الشخصيات/التفاصيل المستوحاة من:**
-${formatAnswers(answers).substring(0, 200)}...
+const imagePrompt = (paragraph) => `
+A cute cartoon-style illustration for scene. Scene: "${paragraph}". Mood: Colorful, magical, high quality`;
 
-ألوان زاهية ودافئة، بجودة عالية، وتنسيق أفقي (landscape)، ومناسبة جدًا للأطفال.
-`;
-/**
- * Uses Gemini to translate an Arabic prompt to a concise English image prompt.
- * @param {string} arabicPrompt - The Arabic text to translate.
- * @param {object} ai - The GoogleGenAI client instance.
- * @returns {Promise<string>} - The translated English prompt.
- */
 export { storyPrompt, imagePrompt, formatAnswers };
