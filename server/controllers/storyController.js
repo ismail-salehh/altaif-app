@@ -21,6 +21,7 @@ async function translatePrompt(arabicPrompt, ai) {
       maxOutputTokens: 500,
     },
   });
+  console.log('story translated')
   return response.text?.trim() || "A cute cartoon illustration.";
 }
 
@@ -49,7 +50,6 @@ export const generateStory = async (req, res) => {
       storyText = localRes.data?.story;
       source = "LOCAL_MODEL";
     }
-
     // 3. Using Gemini
     else {
       const response = await ai.models.generateContent({
@@ -64,7 +64,9 @@ export const generateStory = async (req, res) => {
       source = "GEMINI";
 
       if (!storyText) return res.status(500).json({ message: "Empty story from model" });
+      console.log('story generated')
     }
+    console.log('story not generated')
     englishStoryText = await translatePrompt(storyText, ai);
     
     // 4. Split into paragraphs
