@@ -141,6 +141,118 @@ const StoryDashboard = () => {
         className="absolute inset-0 w-full h-full object-cover z-0 pointer-events-none"
         src="/videos/generating-story-bg.mp4"
       />
+      <div className="relative z-10">
+        <Navbar />
+        {/* Full-screen Carousel Below Navbar */}
+        <div
+          className="w-full h-[calc(100vh-80px)] relative overflow-hidden rounded-3xl bg-gray-100 group"
+          dir="ltr"
+        >
+          <div
+            className="flex transition-transform duration-500 ease-out h-full w-full"
+            style={{ transform: `translateX(-${currentScene * 100}%)` }}
+          >
+            {scenes.map((scene, idx) => (
+              <div key={idx} className="w-full flex-shrink-0 h-full relative">
+                {scene.imageUrl ? (
+                  <img
+                    src={getImageUrl(scene.imageUrl)}
+                    alt={`Scene ${idx + 1}`}
+                    className="w-full h-full object-cover rounded-b-3xl"
+                    onError={(e) => {
+                      e.target.onerror = null;
+                      e.target.src =
+                        "https://via.placeholder.com/800x450?text=Image+Loading+Error";
+                    }}
+                  />
+                ) : (
+                  <div
+                    className="w-full h-full flex items-end bg-gray-200"
+                    dir="rtl"
+                  >
+                    <div className="absolute bottom-0 left-0 right-0 bg-black/50 backdrop-blur-sm text-white p-6 text-right">
+                      <p className="text-base md:text-xl leading-relaxed">
+                        {scene.paragraph}
+                      </p>
+                    </div>
+                  </div>
+                )}
+
+                {/* Caption Overlay */}
+                <div
+                  className="absolute bottom-0 left-0 right-0 bg-black/60 text-white p-4 text-right rounded-b-3xl"
+                  dir="rtl"
+                >
+                  <p className="text-sm md:text-base line-clamp-2">
+                    {scene.paragraph}
+                  </p>
+                </div>
+              </div>
+            ))}
+          </div>
+
+          {/* Navigation Arrows (Only visible if > 1 scene) */}
+          {scenes.length > 1 && (
+            <>
+              {/* Left Arrow (Previous) */}
+              <button
+                onClick={prevScene}
+                disabled={currentScene === 0}
+                className="absolute left-4 top-1/2 -translate-y-1/2 bg-white/80 hover:bg-white text-teal-800 p-2 rounded-full shadow-lg disabled:opacity-30 z-10"
+              >
+                <ChevronLeftIcon className="w-6 h-6" />
+              </button>
+
+              {/* Right Arrow (Next) */}
+              <button
+                onClick={nextScene}
+                disabled={currentScene === scenes.length - 1}
+                className="absolute right-4 top-1/2 -translate-y-1/2 bg-white/80 hover:bg-white text-teal-800 p-2 rounded-full shadow-lg disabled:opacity-30 z-10"
+              >
+                <ChevronRightIcon className="w-6 h-6" />
+              </button>
+            </>
+          )}
+
+          {/* Dots Indicator */}
+          <div className="absolute top-4 left-1/2 transform -translate-x-1/2 flex space-x-2 z-10">
+            {scenes.map((_, idx) => (
+              <button
+                key={idx}
+                onClick={() => setCurrentScene(idx)}
+                className={`w-3 h-3 rounded-full transition-all shadow ${
+                  idx === currentScene
+                    ? "bg-orange-500 scale-125"
+                    : "bg-white/70 hover:bg-white"
+                }`}
+              />
+            ))}
+          </div>
+        </div>
+
+        {/* Controls Below Carousel */}
+        <div className="max-w-4xl mx-auto px-4 mt-6 space-y-6">
+          <div class="flex justify-center space-x-4 dir-rtl">
+            <button
+              onClick={speakStory}
+              disabled={isPlaying}
+              className={`px-8 py-3 rounded-full font-bold text-lg shadow-lg transition-all transform hover:scale-105 ${
+                isPlaying
+                  ? "bg-gray-400 cursor-not-allowed"
+                  : "bg-orange-500 text-white hover:bg-orange-600"
+              }`}
+            >
+              {isPlaying ? "🔊 جاري القراءة..." : "▶️ استمع للقصة"}
+            </button>
+            <button
+              onClick={() => navigate("/game")}
+              className="bg-teal-600 text-white font-bold py-3 px-8 rounded-full hover:bg-teal-700 transition shadow-lg"
+            >
+              🔄 اصنع قصة جديدة
+            </button>
+          </div>
+        </div>
+      </div>
     </div>
   );
 };
