@@ -11,94 +11,110 @@ const ai = new GoogleGenAI({
 
 const STORY_MODEL = "gemini-2.0-flash-lite";
 
-async function translatePrompt(arabicPrompt, ai) {
-  const translationSystemInstruction = `You are a professional language translator. Your sole task is to take the provided Arabic text, which is an image prompt, and translate it into a concise, detailed, high-quality English image prompt. Do not add any conversational text, explanations, or formatting. Only return the English prompt text.`;
+/**
+ * Translate Arabic text to English (used for image prompts)
+ */
+async function translateToEnglish(arabicText) {
+  const systemInstruction = `
+You are a professional translator.
+Translate the given Arabic text into concise, descriptive English.
+Do not add explanations, formatting, or commentary.
+Return only the translated text.
+`;
+
   const response = await ai.models.generateContent({
-    model: "gemini-2.0-flash-lite",
-    contents: [{role: "user",parts: [{ text: arabicPrompt }]}],
+    model: STORY_MODEL,
+    contents: [
+      {
+        role: "user",
+        parts: [{ text: arabicText }],
+      },
+    ],
     config: {
-      systemInstruction: translationSystemInstruction,
-      maxOutputTokens: 500,
+      systemInstruction,
+      maxOutputTokens: 300,
     },
   });
-  console.log('story translated')
-  return response.text?.trim() || "A cute cartoon illustration.";
+
+  return response.text?.trim();
 }
 
 export const generateStory = async (req, res) => {
   try {
     const { answers } = req.body;
-    console.log(answers);
     if (!answers) {
       return res.status(400).json({ message: "No answers provided" });
     }
 
-    // 1. Build Prompt
+    // 1. Build story prompt
     const prompt = storyPrompt(answers);
-    let storyText;
-    let englishStoryText;
-    let source;
 
-    // 2. local model option
+    let storyText;
+
+    // 2. Generate story (LOCAL or GEMINI)
     if (useLocalModel) {
-      console.log("Using LOCAL model");
       const localRes = await axios.post(
         `${process.env.LOCAL_AI_URL}/generate`,
         { prompt }
       );
-
       storyText = localRes.data?.story;
-      source = "LOCAL_MODEL";
-    }
-    // 3. Using Gemini
-    else {
+    } else {
       const response = await ai.models.generateContent({
         model: STORY_MODEL,
         contents: [{ role: "user", parts: [{ text: prompt }] }],
-        config: {
-          maxOutputTokens: 2000,
-        },
+        config: { maxOutputTokens: 2000 },
       });
-
       storyText = response.text?.trim();
-      source = "GEMINI";
-
-      if (!storyText) return res.status(500).json({ message: "Empty story from model" });
-      console.log('story generated')
     }
-    console.log('story not generated')
-    englishStoryText = await translatePrompt(storyText, ai);
-    
-    // 4. Split into paragraphs
-    const paragraphs = storyText
+
+    if (!storyText) {
+      return res.status(500).json({ message: "Empty story from model" });
+    }
+
+    // 3. Split Arabic story into scenes FIRST
+    const arabicScenes = storyText
       .split(/\n+/)
       .map((p) => p.trim())
       .filter(Boolean)
       .slice(0, 5);
 
-    const englishParagraphs = englishStoryText
-      .split(/\n+/)
-      .map((p) => p.trim())
-      .filter(Boolean)
-      .slice(0, 5);
-
-    // 5. Build scenes with prompts
-    const scenes = englishParagraphs.map((p) => ({
-      paragraph: p.split(" ").slice(0, 15).join(" "),
-      prompt: imagePrompt(p),
-      imageUrl: null,
-    }));
-
-    for (let i = 0; i < scenes.length; i++) {
-      const scene = scenes[i];
-      const seed = Math.floor(Math.random() * 10000); // Random seed for consistent image generation
-      scene.imageUrl = `https://image.pollinations.ai/prompt/${encodeURIComponent(scene.prompt)}?width=1280&height=720&model=flux&seed=${seed}`;
+    // 4. Translate scenes (Arabic → English)
+    const translatedScenes = [];
+    for (const scene of arabicScenes) {
+      const translated = await translateToEnglish(scene);
+      translatedScenes.push(translated || "");
     }
-    return res.json({ success: true, storyText, paragraphs });
+
+    // 5. Build final scene objects
+    const scenes = arabicScenes.map((arabicText, index) => {
+      const englishText = translatedScenes[index];
+      const shortPrompt = englishText
+        ?.split(" ")
+        .slice(0, 15)
+        .join(" ");
+
+      const seed = Math.floor(Math.random() * 10000);
+
+      return {
+        paragraph: arabicText,
+        imagePrompt: imagePrompt(englishText),
+        imageUrl: `https://image.pollinations.ai/prompt/${encodeURIComponent(
+          shortPrompt
+        )}?width=1280&height=720&model=flux&seed=${seed}`,
+      };
+    });
+
+    // 6. Response
+    return res.json({
+      success: true,
+      storyText,
+      scenes,
+    });
   } catch (err) {
-    console.error("Story generate error:", err);
-    return res
-      .status(500)
-      .json({ message: "Story generation failed", error: String(err) });
+    console.error("Story generation error:", err);
+    return res.status(500).json({
+      message: "Story generation failed",
+      error: String(err),
+    });
   }
 };
