@@ -50,11 +50,6 @@ const StoryDashboard = () => {
     }
   }, [storyData]);
 
-  // Stop speech on scene change
-  useEffect(() => {
-    window.speechSynthesis.cancel();
-    setIsPlaying(false);
-  }, [currentScene]);
 
   // Text-to-speech
   const speakScene = () => {
