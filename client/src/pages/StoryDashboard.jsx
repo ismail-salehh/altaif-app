@@ -6,10 +6,10 @@ import Navbar from "../components/Navbar";
 import { ChevronLeftIcon, ChevronRightIcon } from "@heroicons/react/24/outline";
 
 const feedbackOptions = [
-  { id: 1, label: "Very Happy", img: "/faces/very-happy.png" },
-  { id: 2, label: "Happy", img: "/faces/happy.png" },
-  { id: 3, label: "Neutral", img: "/faces/neutral.png" },
-  { id: 4, label: "Sad", img: "/faces/sad.png" },
+  { id: 1, label: "Very Happy", img: "/images/feedback/very-happy.png" },
+  { id: 2, label: "Happy", img: "/images/feedback/happy.png" },
+  { id: 3, label: "Neutral", img: "/images/feedback/neutral.png" },
+  { id: 4, label: "Not Happy", img: "/images/feedback/not-happy.png" },
 ];
 
 const StoryDashboard = () => {
@@ -53,11 +53,9 @@ const StoryDashboard = () => {
     utterance.rate = 0.9;
 
     const interval = setInterval(() => {
-      setCurrentScene((prev) => {
-        if (!storyData.scenes) return prev;
-        if (prev < storyData.scenes.length - 1) return prev + 1;
-        return prev;
-      });
+      setCurrentScene((prev) =>
+        prev < storyData.scenes.length - 1 ? prev + 1 : prev
+      );
     }, 6000);
 
     utterance.onend = () => {
@@ -69,15 +67,8 @@ const StoryDashboard = () => {
     speechSynthesis.speak(utterance);
   };
 
-  const submitFeedback = () => {
-    if (!selectedFeedback) return;
-    console.log("Story feedback:", selectedFeedback);
-    setShowFeedback(false);
-    setSelectedFeedback(null);
-  };
-
   const nextScene = () => {
-    if (currentScene < (storyData?.scenes?.length || 0) - 1)
+    if (currentScene < storyData.scenes.length - 1)
       setCurrentScene((p) => p + 1);
   };
 
@@ -87,9 +78,9 @@ const StoryDashboard = () => {
 
   if (!answers) return null;
 
-  if (isLoading)
+  if (isLoading) {
     return (
-      <div className="relative min-h-screen flex items-center justify-center text-xl font-bold">
+      <div className="relative min-h-screen flex items-center justify-center">
         <video
           autoPlay
           muted
@@ -97,13 +88,14 @@ const StoryDashboard = () => {
           className="absolute inset-0 w-full h-full object-cover"
           src="/videos/generating-story-bg.mp4"
         />
-        <h2 className="relative z-10 text-white">
+        <h2 className="relative z-10 text-white text-xl font-bold">
           جاري تأليف قصتك ورسم المشاهد ...
         </h2>
       </div>
     );
+  }
 
-  if (error)
+  if (error) {
     return (
       <div className="flex flex-col items-center justify-center min-h-screen">
         <p className="mb-4 text-red-500 font-bold">
@@ -117,23 +109,35 @@ const StoryDashboard = () => {
         </button>
       </div>
     );
+  }
 
   const { scenes = [] } = storyData;
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-emerald-50 to-teal-50 relative overflow-hidden" dir="rtl">
+    <div
+      className="min-h-screen bg-gradient-to-br from-emerald-50 to-teal-50 overflow-hidden"
+      dir="rtl"
+    >
       <Navbar />
 
       {/* Carousel */}
-      <div className="w-full h-[calc(85vh-80px)] relative overflow-hidden rounded-3xl bg-gray-100" dir="ltr">
+      <div
+        className="relative w-full h-[calc(85vh-80px)] overflow-hidden rounded-3xl bg-gray-100"
+        dir="ltr"
+      >
+        {/* TRACK */}
         <div
-          className="flex transition-transform duration-500 h-full"
+          className="flex w-full h-full transition-transform duration-500 ease-out"
           style={{ transform: `translateX(-${currentScene * 100}%)` }}
         >
           {scenes.map((scene, idx) => (
-            <div key={idx} className="w-full h-full flex-shrink-0 relative">
+            <div
+              key={idx}
+              className="w-full h-full flex-shrink-0 relative"
+            >
               <img
                 src={scene.imageUrl}
+                alt={`Scene ${idx + 1}`}
                 className="w-full h-full object-cover"
               />
               <div className="absolute bottom-0 inset-x-0 bg-black/60 text-white p-4 text-right">
@@ -143,19 +147,21 @@ const StoryDashboard = () => {
           ))}
         </div>
 
+        {/* Arrows */}
         {scenes.length > 1 && (
           <>
             <button
               onClick={prevScene}
               disabled={currentScene === 0}
-              className="absolute left-4 top-1/2 -translate-y-1/2 bg-white/80 p-2 rounded-full"
+              className="absolute left-4 top-1/2 -translate-y-1/2 z-10 bg-white/80 p-2 rounded-full shadow"
             >
               <ChevronLeftIcon className="w-6 h-6" />
             </button>
+
             <button
               onClick={nextScene}
               disabled={currentScene === scenes.length - 1}
-              className="absolute right-4 top-1/2 -translate-y-1/2 bg-white/80 p-2 rounded-full"
+              className="absolute right-4 top-1/2 -translate-y-1/2 z-10 bg-white/80 p-2 rounded-full shadow"
             >
               <ChevronRightIcon className="w-6 h-6" />
             </button>
@@ -164,7 +170,7 @@ const StoryDashboard = () => {
       </div>
 
       {/* Controls */}
-      <div className="mt-6 flex justify-center gap-4">
+      <div className="mt-6 flex justify-center">
         <button
           onClick={speakStory}
           disabled={isPlaying}
@@ -187,12 +193,10 @@ const StoryDashboard = () => {
                 <button
                   key={opt.id}
                   onClick={() => setSelectedFeedback(opt.id)}
-                  className={`relative w-[160px] h-[160px] sm:w-[220px] sm:h-[220px] md:w-[300px] md:h-[300px]
-                  rounded-full overflow-hidden border-2 shadow-md transition-transform duration-300
-                  ${
+                  className={`relative w-[160px] h-[160px] rounded-full overflow-hidden border-2 transition ${
                     selectedFeedback === opt.id
-                      ? "border-sky-500 scale-110 shadow-lg"
-                      : "border-gray-300 hover:scale-110"
+                      ? "border-sky-500 scale-110"
+                      : "border-gray-300 hover:scale-105"
                   }`}
                 >
                   <img
@@ -205,9 +209,9 @@ const StoryDashboard = () => {
             </div>
 
             <button
-              onClick={submitFeedback}
+              onClick={() => setShowFeedback(false)}
               disabled={!selectedFeedback}
-              className="mt-8 px-10 py-4 bg-emerald-600 text-white rounded-full font-bold text-lg disabled:opacity-50"
+              className="mt-8 px-10 py-4 bg-emerald-600 text-white rounded-full font-bold disabled:opacity-50"
             >
               إرسال التقييم
             </button>
