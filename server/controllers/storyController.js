@@ -9,7 +9,7 @@ const ai = new GoogleGenAI({
   apiKey: process.env.GEMINI_API_KEY,
 });
 
-const STORY_MODEL = "gemini-2.0-flash-lite";
+const STORY_MODEL = "gemini-2.5-flash";
 
 /**
  * Translate Arabic text to English (used for image prompts)
