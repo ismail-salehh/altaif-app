@@ -4,7 +4,7 @@ import { useQuery } from "@tanstack/react-query";
 import api from "../utils/api";
 import { useNavigate } from "react-router-dom";
 import Navbar from "../components/Navbar";
-import { ChevronLeftIcon, ChevronRightIcon } from "@heroicons/react/24/outline"; // Assuming Heroicons are installed; install via npm if needed
+import { ChevronLeftIcon, ChevronRightIcon } from "@heroicons/react/24/outline"; 
 
 const StoryDashboard = () => {
   const navigate = useNavigate();
@@ -53,15 +53,15 @@ const StoryDashboard = () => {
     // Simple timer to approximate scene changes based on total text length
     // (A more advanced version would split audio by paragraph)
     const totalDuration = storyData.storyText.length * 100; // rough estimate
-    const timePerScene = totalDuration / (storyData.scenes.length || 1);
+    const timePerScene = totalDuration / (storyData.paragraphs.length || 1);
 
     const interval = setInterval(() => {
       setCurrentScene((prev) => {
-        if (!storyData.scenes) return prev;
-        if (prev < storyData.scenes.length - 1) return prev + 1;
+        if (!storyData.paragraphs) return prev;
+        if (prev < storyData.paragraphs.length - 1) return prev + 1;
         return prev;
       });
-    }, 6000); // Switch every 6 seconds roughly
+    }, 6000);
 
     utterance.onend = () => {
       clearInterval(interval);
