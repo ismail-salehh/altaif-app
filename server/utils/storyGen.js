@@ -114,10 +114,16 @@ const storyPrompt = (answers) => `
 أكتب قصة أطفال مخصصة بالعربية الفصحى البسيطة بناءً على الملامح التفصيلية التالية للطفل:
 ${formatAnswers(answers)}
 
-اجعل القصة تتكون من 5 فقرات. يجب أن تكون القصة إيجابية، وتحتوي على عنصر مغامرة، وتوصل رسالة عاطفية بسيطة وتنتهي بنهاية سعيدة.
+اجعل القصة تتكون من 4 إلى 6 فقرات. يجب أن تكون القصة إيجابية، وتحتوي على عنصر مغامرة، وتوصل رسالة عاطفية بسيطة. تبدأ القصة بعبارة "كان يا ما كان" وتنتهي بنهاية سعيدة.
 `;
 
-const imagePrompt = (paragraph) => `
-A cute cartoon-style illustration for scene. Scene: "${paragraph}". Mood: Colorful, magical, high quality`;
+const imagePrompt = (paragraph, answers, sceneNum) => `
+A cute cartoon-style illustration for scene number ${sceneNum} from the story.
+**Scene:** "${paragraph}"
+**Characters/Details inspired by:**
+${formatAnswers(answers).substring(0, 200)}...
+
+Bright and warm colors, high quality, landscape format, and very suitable for children.
+`;
 
 export { storyPrompt, imagePrompt, formatAnswers };
