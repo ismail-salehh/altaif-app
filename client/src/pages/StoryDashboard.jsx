@@ -1,10 +1,16 @@
-// client/src/pages/StoryDashboard.jsx
 import React, { useEffect, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import api from "../utils/api";
 import { useNavigate } from "react-router-dom";
 import Navbar from "../components/Navbar";
-import { ChevronLeftIcon, ChevronRightIcon } from "@heroicons/react/24/outline"; // Assuming Heroicons are installed; install via npm if needed
+import { ChevronLeftIcon, ChevronRightIcon } from "@heroicons/react/24/outline";
+
+const feedbackOptions = [
+  { id: 1, label: "Very Happy", img: "/faces/very-happy.png" },
+  { id: 2, label: "Happy", img: "/faces/happy.png" },
+  { id: 3, label: "Neutral", img: "/faces/neutral.png" },
+  { id: 4, label: "Sad", img: "/faces/sad.png" },
+];
 
 const StoryDashboard = () => {
   const navigate = useNavigate();
@@ -12,48 +18,39 @@ const StoryDashboard = () => {
   const [isPlaying, setIsPlaying] = useState(false);
   const [currentScene, setCurrentScene] = useState(0);
 
+  const [showFeedback, setShowFeedback] = useState(false);
+  const [selectedFeedback, setSelectedFeedback] = useState(null);
+
   useEffect(() => {
     const saved = localStorage.getItem("gameAnswers");
-    if (saved) {
-      setAnswers(JSON.parse(saved));
-    } else {
-      navigate("/game");
-    }
+    if (saved) setAnswers(JSON.parse(saved));
+    else navigate("/game");
   }, [navigate]);
 
-  const {
-    data: storyData,
-    isLoading,
-    error,
-    refetch,
-  } = useQuery({
+  const { data: storyData, isLoading, error, refetch } = useQuery({
     queryKey: ["story", answers],
+    enabled: !!answers,
+    staleTime: Infinity,
+    retry: 1,
     queryFn: async () => {
-      if (!answers) throw new Error("No answers");
       const res = await api.post("/api/story/generate", { answers });
       return res.data;
     },
-    enabled: !!answers,
-    retry: 1,
-    staleTime: Infinity, // Don't refetch automatically
   });
 
-  // Reset to scene 0 when data loads
   useEffect(() => {
     if (storyData) setCurrentScene(0);
   }, [storyData]);
 
   const speakStory = () => {
     if (!storyData || isPlaying) return;
+
+    window.speechSynthesis.cancel();
+    setIsPlaying(true);
+
     const utterance = new SpeechSynthesisUtterance(storyData.storyText);
     utterance.lang = "ar-SA";
     utterance.rate = 0.9;
-    setIsPlaying(true);
-
-    // Simple timer to approximate scene changes based on total text length
-    // (A more advanced version would split audio by paragraph)
-    const totalDuration = storyData.storyText.length * 100; // rough estimate
-    const timePerScene = totalDuration / (storyData.scenes.length || 1);
 
     const interval = setInterval(() => {
       setCurrentScene((prev) => {
@@ -61,46 +58,42 @@ const StoryDashboard = () => {
         if (prev < storyData.scenes.length - 1) return prev + 1;
         return prev;
       });
-    }, 6000); // Switch every 6 seconds roughly
+    }, 6000);
 
     utterance.onend = () => {
       clearInterval(interval);
       setIsPlaying(false);
+      setShowFeedback(true);
     };
 
     speechSynthesis.speak(utterance);
   };
 
-  // Helper to get full image URL
-  const getImageUrl = (path) => {
-    if (!path) return null;
-    console.log(path)
-    if (path.startsWith("http")) return path;
-    return `${BACKEND_URL}${path}`;
+  const submitFeedback = () => {
+    if (!selectedFeedback) return;
+    console.log("Story feedback:", selectedFeedback);
+    setShowFeedback(false);
+    setSelectedFeedback(null);
   };
 
-  // Manual Navigation
   const nextScene = () => {
-    if (currentScene < (storyData?.scenes?.length || 0) - 1) {
-      setCurrentScene((prev) => prev + 1);
-    }
+    if (currentScene < (storyData?.scenes?.length || 0) - 1)
+      setCurrentScene((p) => p + 1);
   };
 
   const prevScene = () => {
-    if (currentScene > 0) {
-      setCurrentScene((prev) => prev - 1);
-    }
+    if (currentScene > 0) setCurrentScene((p) => p - 1);
   };
 
   if (!answers) return null;
+
   if (isLoading)
     return (
-      <div className="relative min-h-screen flex items-center justify-center text-xl font-bold text-emerald-600">
+      <div className="relative min-h-screen flex items-center justify-center text-xl font-bold">
         <video
           autoPlay
           muted
           loop
-          playsInline
           className="absolute inset-0 w-full h-full object-cover"
           src="/videos/generating-story-bg.mp4"
         />
@@ -112,144 +105,115 @@ const StoryDashboard = () => {
 
   if (error)
     return (
-      <div className="flex flex-col bg-teal-300 items-center justify-center min-h-screen text-red-500 font-bold">
-        <p className="text-xl mb-4">حدث خطأ أثناء إنشاء القصة</p>
+      <div className="flex flex-col items-center justify-center min-h-screen">
+        <p className="mb-4 text-red-500 font-bold">
+          حدث خطأ أثناء إنشاء القصة
+        </p>
         <button
           onClick={() => refetch()}
-          className="px-6 py-2 bg-emerald-700 text-white rounded-full hover:bg-emerald-900 transition"
+          className="px-6 py-2 bg-emerald-700 text-white rounded-full"
         >
           حاول مرة أخرى
         </button>
       </div>
     );
 
-  const { storyText, scenes = [] } = storyData;
+  const { scenes = [] } = storyData;
 
   return (
-    <div
-      className="min-h-screen bg-gradient-to-br from-emerald-50 to-teal-50 pb-10 relative overflow-hidden"
-      dir="rtl"
-    >
-      <video
-        autoPlay
-        muted
-        loop
-        playsInline
-        className="absolute inset-0 w-full h-full object-cover z-0 pointer-events-none"
-        src="/videos/generating-story-bg.mp4"
-      />
-      <div className="relative z-10">
-        <Navbar />
-        {/* Full-screen Carousel Below Navbar */}
+    <div className="min-h-screen bg-gradient-to-br from-emerald-50 to-teal-50 relative overflow-hidden" dir="rtl">
+      <Navbar />
+
+      {/* Carousel */}
+      <div className="w-full h-[calc(85vh-80px)] relative overflow-hidden rounded-3xl bg-gray-100" dir="ltr">
         <div
-          className="w-full h-[calc(85vh-80px)] relative overflow-hidden rounded-3xl bg-gray-100 group"
-          dir="ltr"
+          className="flex transition-transform duration-500 h-full"
+          style={{ transform: `translateX(-${currentScene * 100}%)` }}
         >
-          <div
-            className="flex transition-transform duration-500 ease-out h-full w-full"
-            style={{ transform: `translateX(-${currentScene * 100}%)` }}
-          >
-            {scenes.map((scene, idx) => (
-              <div key={idx} className="w-full flex-shrink-0 h-full relative">
-                {scene.imageUrl ? (
-                  <img
-                    src={getImageUrl(scene.imageUrl)}
-                    alt={`Scene ${idx + 1}`}
-                    className="w-full h-full object-cover rounded-b-3xl"
-                    onError={(e) => {
-                      e.target.onerror = null;
-                      e.target.src =
-                        "https://via.placeholder.com/800x450?text=Image+Loading+Error";
-                    }}
-                  />
-                ) : (
-                  <div
-                    className="w-full h-full flex items-end bg-gray-200"
-                    dir="rtl"
-                  >
-                    <div className="absolute bottom-0 left-0 right-0 bg-black/50 backdrop-blur-sm text-white p-6 text-right">
-                      <p className="text-base md:text-xl leading-relaxed">
-                        {scene.paragraph}
-                      </p>
-                    </div>
-                  </div>
-                )}
-
-                {/* Caption Overlay */}
-                <div
-                  className="absolute bottom-0 left-0 right-0 bg-black/60 text-white p-4 text-right rounded-b-3xl"
-                  dir="rtl"
-                >
-                  <p className="text-sm md:text-base line-clamp-2">
-                    {scene.paragraph}
-                  </p>
-                </div>
-              </div>
-            ))}
-          </div>
-
-          {/* Navigation Arrows (Only visible if > 1 scene) */}
-          {scenes.length > 1 && (
-            <>
-              {/* Left Arrow (Previous) */}
-              <button
-                onClick={prevScene}
-                disabled={currentScene === 0}
-                className="absolute left-4 top-1/2 -translate-y-1/2 bg-white/80 hover:bg-white text-teal-800 p-2 rounded-full shadow-lg disabled:opacity-30 z-10"
-              >
-                <ChevronLeftIcon className="w-6 h-6" />
-              </button>
-
-              {/* Right Arrow (Next) */}
-              <button
-                onClick={nextScene}
-                disabled={currentScene === scenes.length - 1}
-                className="absolute right-4 top-1/2 -translate-y-1/2 bg-white/80 hover:bg-white text-teal-800 p-2 rounded-full shadow-lg disabled:opacity-30 z-10"
-              >
-                <ChevronRightIcon className="w-6 h-6" />
-              </button>
-            </>
-          )}
-
-          {/* Dots Indicator */}
-          <div className="absolute top-4 left-1/2 transform -translate-x-1/2 flex space-x-2 z-10">
-            {scenes.map((_, idx) => (
-              <button
-                key={idx}
-                onClick={() => setCurrentScene(idx)}
-                className={`w-3 h-3 rounded-full transition-all shadow ${
-                  idx === currentScene
-                    ? "bg-orange-500 scale-125"
-                    : "bg-white/70 hover:bg-white"
-                }`}
+          {scenes.map((scene, idx) => (
+            <div key={idx} className="w-full h-full flex-shrink-0 relative">
+              <img
+                src={scene.imageUrl}
+                className="w-full h-full object-cover"
               />
-            ))}
-          </div>
+              <div className="absolute bottom-0 inset-x-0 bg-black/60 text-white p-4 text-right">
+                {scene.paragraph}
+              </div>
+            </div>
+          ))}
         </div>
 
-        {/* Controls Below Carousel */}
-        <div className="max-w-4xl mx-auto px-4 mt-6 space-y-6">
-          <div class="flex justify-center space-x-4 dir-rtl">
+        {scenes.length > 1 && (
+          <>
             <button
-              onClick={speakStory}
-              disabled={isPlaying}
-              className={`px-8 py-3 rounded-full font-bold text-lg shadow-lg transition-all transform hover:scale-105 ${
-                isPlaying
-                  ? "bg-gray-400 cursor-not-allowed"
-                  : "bg-orange-500 text-white hover:bg-orange-600"
-              }`}
+              onClick={prevScene}
+              disabled={currentScene === 0}
+              className="absolute left-4 top-1/2 -translate-y-1/2 bg-white/80 p-2 rounded-full"
             >
-              {isPlaying ? "🔊 جاري القراءة..." : "▶️ استمع للقصة"}
+              <ChevronLeftIcon className="w-6 h-6" />
             </button>
             <button
-              onClick={() => navigate("/game")}
-              className="bg-teal-600 text-white font-bold py-3 px-8 rounded-full hover:bg-teal-700 transition shadow-lg"
+              onClick={nextScene}
+              disabled={currentScene === scenes.length - 1}
+              className="absolute right-4 top-1/2 -translate-y-1/2 bg-white/80 p-2 rounded-full"
             >
-              🔄 اصنع قصة جديدة
+              <ChevronRightIcon className="w-6 h-6" />
+            </button>
+          </>
+        )}
+      </div>
+
+      {/* Controls */}
+      <div className="mt-6 flex justify-center gap-4">
+        <button
+          onClick={speakStory}
+          disabled={isPlaying}
+          className={`px-8 py-3 rounded-full font-bold ${
+            isPlaying ? "bg-gray-400" : "bg-orange-500 text-white"
+          }`}
+        >
+          {isPlaying ? "🔊 جاري القراءة..." : "▶️ استمع للقصة"}
+        </button>
+      </div>
+
+      {/* Feedback Overlay */}
+      {showFeedback && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-gradient-to-br from-pink-400/60 to-teal-50/60 backdrop-blur-sm">
+          <div className="bg-white/80 rounded-3xl p-8 shadow-2xl text-center">
+            <h2 className="text-2xl font-bold mb-6">كيف كانت القصة؟</h2>
+
+            <div className="flex gap-6 flex-wrap justify-center">
+              {feedbackOptions.map((opt) => (
+                <button
+                  key={opt.id}
+                  onClick={() => setSelectedFeedback(opt.id)}
+                  className={`relative w-[160px] h-[160px] sm:w-[220px] sm:h-[220px] md:w-[300px] md:h-[300px]
+                  rounded-full overflow-hidden border-2 shadow-md transition-transform duration-300
+                  ${
+                    selectedFeedback === opt.id
+                      ? "border-sky-500 scale-110 shadow-lg"
+                      : "border-gray-300 hover:scale-110"
+                  }`}
+                >
+                  <img
+                    src={opt.img}
+                    alt={opt.label}
+                    className="w-full h-full object-cover"
+                  />
+                </button>
+              ))}
+            </div>
+
+            <button
+              onClick={submitFeedback}
+              disabled={!selectedFeedback}
+              className="mt-8 px-10 py-4 bg-emerald-600 text-white rounded-full font-bold text-lg disabled:opacity-50"
+            >
+              إرسال التقييم
             </button>
           </div>
         </div>
-      </div>
+      )}
     </div>
   );
 };
