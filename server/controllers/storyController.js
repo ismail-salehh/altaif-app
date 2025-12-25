@@ -9,12 +9,12 @@ const ai = new GoogleGenAI({
   apiKey: process.env.GEMINI_API_KEY,
 });
 
-const STORY_MODEL = "gemini-2.5-flash-lite";
+const STORY_MODEL = "gemini-2.0-flash-lite";
 
 async function translatePrompt(arabicPrompt, ai) {
   const translationSystemInstruction = `You are a professional language translator. Your sole task is to take the provided Arabic text, which is an image prompt, and translate it into a concise, detailed, high-quality English image prompt. Do not add any conversational text, explanations, or formatting. Only return the English prompt text.`;
   const response = await ai.models.generateContent({
-    model: "gemini-2.5-flash-lite",
+    model: "gemini-2.0-flash-lite",
     contents: [{role: "user",parts: [{ text: arabicPrompt }]}],
     config: {
       systemInstruction: translationSystemInstruction,
