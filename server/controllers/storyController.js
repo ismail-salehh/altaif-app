@@ -36,7 +36,7 @@ async function translatePrompt(arabicPrompt) {
     config: {
       systemInstruction:
         "Translate Arabic image prompt into concise, high-quality English. Return only the prompt.",
-      maxOutputTokens: 300,
+      maxOutputTokens: 500,
     },
   });
 
