@@ -1,20 +1,29 @@
 // server/controllers/storyController.js
-import { GoogleGenAI } from "@google/genai"; // 1. Import GoogleGenAI
-import { storyPrompt, imagePrompt } from "../utils/storyGen.js";
+import axios from "axios";
+import { GoogleGenAI } from "@google/genai";
+import {
+  storyPrompt,
+  imagePrompt,
+  splitIntoScenes,
+} from "../utils/storyGen.js";
+import dotenv from "dotenv";
+dotenv.config();
 
-// 2. Initialize the Gemini client
+// detect local usage
+const useLocalModel = process.env.USE_LOCAL_MODEL === "true";
+
+// Gemini client (used for translation + images always)
 const ai = new GoogleGenAI({
-  apiKey: process.env.GEMINI_API_KEY, // Make sure you use GEMINI_API_KEY in your .env
+  apiKey: process.env.GEMINI_API_KEY,
 });
 
-// A good model for fast text generation like story paragraphs
 const STORY_MODEL = "gemini-2.5-flash";
 
 async function translatePrompt(arabicPrompt, ai) {
   const translationSystemInstruction = `You are a professional language translator. Your sole task is to take the provided Arabic text, which is an image prompt, and translate it into a concise, detailed, high-quality English image prompt. Do not add any conversational text, explanations, or formatting. Only return the English prompt text.`;
 
   const response = await ai.models.generateContent({
-    model: "gemini-2.5-flash", // Use the fast model for translation
+    model: "gemini-2.0-flash-lite",
     contents: [
       {
         role: "user",
@@ -27,44 +36,56 @@ async function translatePrompt(arabicPrompt, ai) {
     },
   });
 
-  console.log("translated story:", response.text?.trim());
-
   return response.text?.trim() || "A cute cartoon illustration.";
 }
 
 export const generateStory = async (req, res) => {
   try {
     const { answers } = req.body;
-    console.log(answers);
     if (!answers) {
       return res.status(400).json({ message: "No answers provided" });
     }
 
     const prompt = storyPrompt(answers);
+    let storyText;
 
-    // 1. Generate Story Text
-    const response = await ai.models.generateContent({
-      model: STORY_MODEL,
-      contents: [{ role: "user", parts: [{ text: prompt }] }],
-      config: {
-        maxOutputTokens: 2000,
-      },
-    });
-    console.log(response);
-    const storyText = response.text?.trim(); // 4. Access the response text directly
+    // ===============================
+    // 1. STORY GENERATION (ONLY PART THAT CHANGES)
+    // ===============================
+    if (useLocalModel) {
+      console.log("Using LOCAL model for story generation");
+
+      const localRes = await axios.post(
+        `${process.env.LOCAL_AI_URL}/generate`,
+        { prompt }
+      );
+
+      storyText = localRes.data?.story;
+      console.log(storyText);
+    } else {
+      console.log("Using GEMINI for story generation");
+
+      const response = await ai.models.generateContent({
+        model: STORY_MODEL,
+        contents: [{ role: "user", parts: [{ text: prompt }] }],
+        config: {
+          maxOutputTokens: 2000,
+        },
+      });
+
+      storyText = response.text?.trim();
+    }
 
     if (!storyText) {
       return res.status(500).json({ message: "Empty story from model" });
     }
 
-    const paragraphs = storyText
-      .split(/\n+/)
-      .map((p) => p.trim())
-      .filter(Boolean)
-      .slice(0, 5); // keep sane limit
+    // ===============================
+    // 2. Scenes GENERATION (UNCHANGED)
+    // ===============================
+    const sceneTexts = splitIntoScenes(storyText, 5);
 
-    // 2. Generate Image Prompts & Structures
-    const scenes = paragraphs.map((p, i) => ({
+    const scenes = sceneTexts.map((p, i) => ({
       paragraph: p,
       prompt: imagePrompt(p, answers, i + 1),
       imageUrl: null,
@@ -72,27 +93,20 @@ export const generateStory = async (req, res) => {
 
     for (let i = 0; i < scenes.length; i++) {
       const scene = scenes[i];
-
-      // Translate the prompt
       const englishPrompt = await translatePrompt(scene.prompt, ai);
-
-      // Create a random seed to ensure the image stays the same if they refresh
       const seed = Math.floor(Math.random() * 10000);
 
-      // Construct the URL directly.
-      // The frontend will load this URL inside the <img src="..." /> tag.
       scene.imageUrl = `https://image.pollinations.ai/prompt/${encodeURIComponent(
         englishPrompt
       )}?width=1280&height=720&model=flux&seed=${seed}`;
-
-      console.log(`[Scene ${i + 1}] Image URL ready: ${scene.imageUrl}`);
     }
 
     return res.json({ success: true, storyText, scenes });
   } catch (err) {
     console.error("Story generate error:", err);
-    return res
-      .status(500)
-      .json({ message: "Story generation failed", error: String(err) });
+    return res.status(500).json({
+      message: "Story generation failed",
+      error: String(err),
+    });
   }
 };

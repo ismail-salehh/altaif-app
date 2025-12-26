@@ -126,4 +126,19 @@ ${formatAnswers(answers).substring(0, 200)}...
 Bright and warm colors, high quality, landscape format, and very suitable for children.
 `;
 
-export { storyPrompt, imagePrompt, formatAnswers };
+const splitIntoScenes = (text, maxScenes = 5) => {
+  const sentences = text
+    .replace(/\s+/g, " ")
+    .split(/(?<=[.!؟])\s+/);
+
+  const scenes = [];
+  const sentencesPerScene = Math.ceil(sentences.length / maxScenes);
+
+  for (let i = 0; i < sentences.length && scenes.length < maxScenes; i += sentencesPerScene) {
+    scenes.push(sentences.slice(i, i + sentencesPerScene).join(" "));
+  }
+
+  return scenes;
+}
+
+export { storyPrompt, imagePrompt, formatAnswers , splitIntoScenes};
