@@ -13,15 +13,13 @@ dotenv.config();
 
 const useLocalModel = process.env.USE_LOCAL_MODEL === "true";
 
-/* ---------------- GEMINI ---------------- */
+/* ---------------- GEMINI (TRANSLATION ONLY) ---------------- */
 
 const ai = new GoogleGenAI({
   apiKey: process.env.GEMINI_API_KEY,
 });
 
-const STORY_MODEL = "gemini-2.5-flash";
-
-/* ---------------- OPENAI (AUDIO ONLY) ---------------- */
+/* ---------------- OPENAI (STORY + AUDIO) ---------------- */
 
 const openai = new OpenAI({
   apiKey: process.env.OPENAI_API_KEY,
@@ -57,7 +55,7 @@ function generateImage(promptEn) {
 
 async function generateAudio(arabicText) {
   const response = await openai.audio.speech.create({
-    model: "gpt-4o-mini-tts", // cheap, supports Arabic
+    model: "gpt-4o-mini-tts",
     voice: "alloy",
     input: arabicText,
     format: "mp3",
@@ -78,7 +76,7 @@ export const generateStory = async (req, res) => {
       return res.status(400).json({ message: "No answers provided" });
     }
 
-    /* ---------- STORY ---------- */
+    /* ---------- STORY (OPENAI) ---------- */
 
     const prompt = storyPrompt(answers);
     let storyText;
@@ -90,17 +88,29 @@ export const generateStory = async (req, res) => {
       );
       storyText = localRes.data?.story;
     } else {
-      const response = await ai.models.generateContent({
-        model: STORY_MODEL,
-        contents: [{ role: "user", parts: [{ text: prompt }] }],
-        config: { maxOutputTokens: 2000 },
+      const response = await openai.chat.completions.create({
+        model: "gpt-4o-mini",
+        messages: [
+          {
+            role: "system",
+            content:
+              "أنت كاتب قصص أطفال محترف. التزم بالتعليمات بدقة واكتب القصة كاملة.",
+          },
+          {
+            role: "user",
+            content: prompt,
+          },
+        ],
+        max_tokens: 2000,
+        temperature: 0.8,
       });
-      storyText = response.text?.trim();
+
+      storyText = response.choices[0]?.message?.content?.trim();
     }
 
     if (!storyText) throw new Error("Empty story");
 
-    console.log('Full story text:', storyText);
+    console.log("Full story text:", storyText);
 
     /* ---------- SCENES ---------- */
 
@@ -123,9 +133,12 @@ export const generateStory = async (req, res) => {
       });
     }
 
-    console.log('Generated paragraphs:', scenes.map(s => s.paragraph));
-    console.log('Generated image URLs:', scenes.map(s => s.imageUrl));
-    console.log('Generated audio URLs (truncated):', scenes.map(s => s.audioUrl.substring(0, 50) + '...'));
+    console.log("Generated paragraphs:", scenes.map(s => s.paragraph));
+    console.log("Generated image URLs:", scenes.map(s => s.imageUrl));
+    console.log(
+      "Generated audio URLs (truncated):",
+      scenes.map(s => s.audioUrl.substring(0, 50) + "...")
+    );
 
     return res.json({
       success: true,
