@@ -17,7 +17,7 @@ const ai = new GoogleGenAI({
 
 const STORY_MODEL = "gemini-2.5-flash";
 const TTS_MODEL = "gemini-2.0-flash-audio-preview";
-const IMAGE_MODEL = "imagen-3-fast";
+const IMAGE_MODEL = "imagen-4.0-fast-generate";
 
 /* ---------------- TRANSLATION ---------------- */
 
