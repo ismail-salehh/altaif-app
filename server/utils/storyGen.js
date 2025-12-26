@@ -120,17 +120,15 @@ ${formatAnswers(answers)}
 
 اجعل القصة طبيعية وكأنها قصة عادية لطفل في هذا العمر،
 بحيث تظهر الصفات من خلال الأحداث والتصرفات فقط.
-.تبدأ القصة بعبارة "كان يا ما كان" وتنتهي بنهاية سعيدة.
-لا تذكر العمر أو الجنس أو التحديات أو الاهتمامات بشكل مباشر.
-أظهرها فقط من خلال تصرفات الطفل والأحداث.
+.تبدأ القصة بعبارة "كان يا ما كان" وتنتهي بنهاية سعيدة وتتكون من 5 فقرات متوسطة الطول (3-6 جمل لكل فقرة)
+لا تذكر العمر أو الجنس أو التحديات أو الاهتمامات أو عدد الأشقاء بشكل مباشر.
+أظهرها فقط من خلال تصرفات الطفل والأحداث. يجب انت تظهر عبرة في نهاية القصة.
 `;
 
-const imagePrompt = (paragraph, answers, sceneNum) => `
-A cute cartoon-style illustration for scene number ${sceneNum} from the story.
-**Scene:** "${paragraph}"
-**Characters/Details inspired by:**
-${formatAnswers(answers).substring(0, 200)}...
-
+const imagePrompt = (paragraph) => `
+A cute cartoon-style illustration for scene number from the story.
+Scene: "${paragraph}"
+Characters/Details inspired by:
 Bright and warm colors, high quality, landscape format, and very suitable for children.
 `;
 

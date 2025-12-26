@@ -88,7 +88,7 @@ export const generateStory = async (req, res) => {
 
     const scenes = sceneTexts.map((p, i) => ({
       paragraph: p,
-      prompt: imagePrompt(p, answers, i + 1),
+      prompt: imagePrompt(p),
       imageUrl: null,
     }));
 

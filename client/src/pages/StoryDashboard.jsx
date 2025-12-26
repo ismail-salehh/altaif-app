@@ -124,7 +124,7 @@ const StoryDashboard = () => {
 
   return (
     <div
-      className="min-h-screen bg-gradient-to-br from-emerald-50 to-teal-50 overflow-hidden"
+      className="min-h-screen bg-gradient-to-br from-emerald-300 to-teal-100 overflow-hidden"
       dir="rtl"
     >
       <Navbar />
@@ -181,7 +181,7 @@ const StoryDashboard = () => {
           onClick={speakStory}
           disabled={isPlaying}
           className={`px-8 py-3 rounded-full font-bold ${
-            isPlaying ? "bg-gray-400" : "bg-orange-500 text-white"
+            isPlaying ? "bg-gray-400" : "bg-pink-500 text-white"
           }`}
         >
           {isPlaying ? "🔊 جاري القراءة..." : "▶️ استمع للقصة"}
