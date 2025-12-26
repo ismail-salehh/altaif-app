@@ -1,5 +1,6 @@
 import axios from "axios";
 import { GoogleGenAI } from "@google/genai";
+import OpenAI from "openai";
 import {
   storyPrompt,
   imagePrompt,
@@ -11,12 +12,19 @@ dotenv.config();
 
 const useLocalModel = process.env.USE_LOCAL_MODEL === "true";
 
+/* ---------------- GEMINI ---------------- */
+
 const ai = new GoogleGenAI({
   apiKey: process.env.GEMINI_API_KEY,
 });
 
 const STORY_MODEL = "gemini-2.5-flash";
-const TTS_MODEL = "gemini-2.0-flash-audio-preview";
+
+/* ---------------- OPENAI (AUDIO ONLY) ---------------- */
+
+const openai = new OpenAI({
+  apiKey: process.env.OPENAI_API_KEY,
+});
 
 /* ---------------- TRANSLATION ---------------- */
 
@@ -44,34 +52,20 @@ function generateImage(promptEn) {
   )}?width=1280&height=720&seed=${seed}&model=flux`;
 }
 
-/* ---------------- AUDIO (GEMINI TTS – UNCHANGED) ---------------- */
+/* ---------------- AUDIO (OPENAI TTS) ---------------- */
 
 async function generateAudio(arabicText) {
-  const response = await ai.models.generateContent({
-    model: TTS_MODEL,
-    contents: [
-      {
-        role: "user",
-        parts: [{ text: arabicText }],
-      },
-    ],
-    config: {
-      responseModalities: ["AUDIO"],
-      audio: {
-        voice: "male",
-        format: "mp3",
-      },
-    },
+  const response = await openai.audio.speech.create({
+    model: "gpt-4o-mini-tts", // cheap, supports Arabic
+    voice: "alloy",
+    input: arabicText,
+    format: "mp3",
   });
 
-  const audioData =
-    response.candidates?.[0]?.content?.parts?.find(
-      (p) => p.inlineData?.mimeType === "audio/mpeg"
-    )?.inlineData?.data;
+  const buffer = Buffer.from(await response.arrayBuffer());
+  const base64Audio = buffer.toString("base64");
 
-  if (!audioData) throw new Error("Audio generation failed");
-
-  return `data:audio/mpeg;base64,${audioData}`;
+  return `data:audio/mpeg;base64,${base64Audio}`;
 }
 
 /* ================= CONTROLLER ================= */
