@@ -17,7 +17,6 @@ const ai = new GoogleGenAI({
 
 const STORY_MODEL = "gemini-2.5-flash";
 const TTS_MODEL = "gemini-2.0-flash-audio-preview";
-const IMAGE_MODEL = "imagen-4.0-fast-generate";
 
 /* ---------------- TRANSLATION ---------------- */
 
@@ -35,25 +34,17 @@ async function translatePrompt(arabicPrompt) {
   return response.text?.trim() || "A cute cartoon illustration.";
 }
 
-/* ---------------- IMAGE ---------------- */
+/* ---------------- IMAGE (POLLINATIONS) ---------------- */
 
-async function generateImage(promptEn) {
-  const response = await ai.models.generateImages({
-    model: IMAGE_MODEL,
-    prompt: promptEn,
-    config: {
-      numberOfImages: 1,
-      aspectRatio: "16:9",
-    },
-  });
+function generateImage(promptEn) {
+  const seed = Math.floor(Math.random() * 100000);
 
-  const base64 = response.generatedImages?.[0]?.image?.imageBytes;
-  if (!base64) throw new Error("Image generation failed");
-
-  return `data:image/png;base64,${base64}`;
+  return `https://image.pollinations.ai/prompt/${encodeURIComponent(
+    promptEn
+  )}?width=1280&height=720&seed=${seed}&model=flux`;
 }
 
-/* ---------------- AUDIO (TTS) ---------------- */
+/* ---------------- AUDIO (GEMINI TTS – UNCHANGED) ---------------- */
 
 async function generateAudio(arabicText) {
   const response = await ai.models.generateContent({
@@ -67,7 +58,7 @@ async function generateAudio(arabicText) {
     config: {
       responseModalities: ["AUDIO"],
       audio: {
-        voice: "male", // child-friendly
+        voice: "male",
         format: "mp3",
       },
     },
@@ -117,7 +108,6 @@ export const generateStory = async (req, res) => {
     /* ---------- SCENES ---------- */
 
     const sceneTexts = splitIntoScenes(storyText, 5);
-
     const scenes = [];
 
     for (let i = 0; i < sceneTexts.length; i++) {
@@ -126,7 +116,7 @@ export const generateStory = async (req, res) => {
       const imgPromptAr = imagePrompt(paragraph, answers, i + 1);
       const imgPromptEn = await translatePrompt(imgPromptAr);
 
-      const imageUrl = await generateImage(imgPromptEn);
+      const imageUrl = generateImage(imgPromptEn);
       const audioUrl = await generateAudio(paragraph);
 
       scenes.push({
