@@ -1,3 +1,4 @@
+// storyController.js
 import axios from "axios";
 import { GoogleGenAI } from "@google/genai";
 import OpenAI from "openai";
@@ -99,6 +100,8 @@ export const generateStory = async (req, res) => {
 
     if (!storyText) throw new Error("Empty story");
 
+    console.log('Full story text:', storyText);
+
     /* ---------- SCENES ---------- */
 
     const sceneTexts = splitIntoScenes(storyText, 5);
@@ -119,6 +122,10 @@ export const generateStory = async (req, res) => {
         audioUrl,
       });
     }
+
+    console.log('Generated paragraphs:', scenes.map(s => s.paragraph));
+    console.log('Generated image URLs:', scenes.map(s => s.imageUrl));
+    console.log('Generated audio URLs (truncated):', scenes.map(s => s.audioUrl.substring(0, 50) + '...'));
 
     return res.json({
       success: true,
