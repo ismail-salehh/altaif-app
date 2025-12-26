@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useRef, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import api from "../utils/api";
 import { useNavigate } from "react-router-dom";
@@ -14,6 +14,8 @@ const feedbackOptions = [
 
 const StoryDashboard = () => {
   const navigate = useNavigate();
+  const audioRef = useRef(null);
+
   const [answers, setAnswers] = useState(null);
   const [isPlaying, setIsPlaying] = useState(false);
   const [currentScene, setCurrentScene] = useState(0);
@@ -47,36 +49,41 @@ const StoryDashboard = () => {
     if (storyData) setCurrentScene(0);
   }, [storyData]);
 
+  /* ================= AUDIO PLAYBACK ================= */
+
+  const playScene = (index) => {
+    if (!storyData || !storyData.scenes[index]) {
+      setIsPlaying(false);
+      setShowFeedback(true);
+      return;
+    }
+
+    setCurrentScene(index);
+
+    if (audioRef.current) {
+      audioRef.current.pause();
+      audioRef.current = null;
+    }
+
+    const audio = new Audio(storyData.scenes[index].audioUrl);
+    audioRef.current = audio;
+
+    audio.onended = () => {
+      playScene(index + 1);
+    };
+
+    audio.play();
+  };
+
   const speakStory = () => {
     if (!storyData || isPlaying) return;
 
-    window.speechSynthesis.cancel();
     setIsPlaying(true);
-    setCurrentScene(0);
-
-    const speakScene = (index) => {
-      if (index >= storyData.scenes.length) {
-        setIsPlaying(false);
-        setShowFeedback(true);
-        return;
-      }
-
-      const utterance = new SpeechSynthesisUtterance(
-        storyData.scenes[index].paragraph
-      );
-      utterance.lang = "ar-SA";
-      utterance.rate = 0.9;
-
-      utterance.onend = () => {
-        setCurrentScene(index + 1);
-        speakScene(index + 1);
-      };
-
-      speechSynthesis.speak(utterance);
-    };
-
-    speakScene(0);
+    setShowFeedback(false);
+    playScene(0);
   };
+
+  /* ================= NAVIGATION ================= */
 
   const nextScene = () => {
     if (currentScene < storyData.scenes.length - 1)
@@ -134,7 +141,6 @@ const StoryDashboard = () => {
         className="relative w-full h-[calc(85vh-80px)] overflow-hidden rounded-3xl bg-gray-100"
         dir="ltr"
       >
-        {/* TRACK */}
         <div
           className="flex w-full h-full transition-transform duration-500 ease-out"
           style={{ transform: `translateX(-${currentScene * 100}%)` }}
@@ -153,7 +159,6 @@ const StoryDashboard = () => {
           ))}
         </div>
 
-        {/* Arrows */}
         {scenes.length > 1 && (
           <>
             <button

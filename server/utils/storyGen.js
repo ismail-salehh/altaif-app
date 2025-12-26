@@ -134,7 +134,7 @@ Bright and warm colors, high quality, landscape format, and very suitable for ch
 
 const splitIntoScenes = (text, maxScenes = 5) => {
   const sentences = text
-    .replace(/\s+/g, " ")
+    .replace(/[\s\n\t]+/g, " ")
     .split(/(?<=[.!؟])\s+/);
 
   const scenes = [];
