@@ -79,6 +79,7 @@ export const generateStory = async (req, res) => {
     if (!storyText) {
       return res.status(500).json({ message: "Empty story from model" });
     }
+    console.log(storyText);
 
     // ===============================
     // 2. Scenes GENERATION (UNCHANGED)

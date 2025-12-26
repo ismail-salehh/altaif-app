@@ -27,7 +27,12 @@ const StoryDashboard = () => {
     else navigate("/game");
   }, [navigate]);
 
-  const { data: storyData, isLoading, error, refetch } = useQuery({
+  const {
+    data: storyData,
+    isLoading,
+    error,
+    refetch,
+  } = useQuery({
     queryKey: ["story", answers],
     enabled: !!answers,
     staleTime: Infinity,
@@ -47,24 +52,30 @@ const StoryDashboard = () => {
 
     window.speechSynthesis.cancel();
     setIsPlaying(true);
+    setCurrentScene(0);
 
-    const utterance = new SpeechSynthesisUtterance(storyData.storyText);
-    utterance.lang = "ar-SA";
-    utterance.rate = 0.9;
+    const speakScene = (index) => {
+      if (index >= storyData.scenes.length) {
+        setIsPlaying(false);
+        setShowFeedback(true);
+        return;
+      }
 
-    const interval = setInterval(() => {
-      setCurrentScene((prev) =>
-        prev < storyData.scenes.length - 1 ? prev + 1 : prev
+      const utterance = new SpeechSynthesisUtterance(
+        storyData.scenes[index].paragraph
       );
-    }, 6000);
+      utterance.lang = "ar-SA";
+      utterance.rate = 0.9;
 
-    utterance.onend = () => {
-      clearInterval(interval);
-      setIsPlaying(false);
-      setShowFeedback(true);
+      utterance.onend = () => {
+        setCurrentScene(index + 1);
+        speakScene(index + 1);
+      };
+
+      speechSynthesis.speak(utterance);
     };
 
-    speechSynthesis.speak(utterance);
+    speakScene(0);
   };
 
   const nextScene = () => {
@@ -98,9 +109,7 @@ const StoryDashboard = () => {
   if (error) {
     return (
       <div className="flex flex-col items-center justify-center min-h-screen">
-        <p className="mb-4 text-red-500 font-bold">
-          حدث خطأ أثناء إنشاء القصة
-        </p>
+        <p className="mb-4 text-red-500 font-bold">حدث خطأ أثناء إنشاء القصة</p>
         <button
           onClick={() => refetch()}
           className="px-6 py-2 bg-emerald-700 text-white rounded-full"
@@ -131,10 +140,7 @@ const StoryDashboard = () => {
           style={{ transform: `translateX(-${currentScene * 100}%)` }}
         >
           {scenes.map((scene, idx) => (
-            <div
-              key={idx}
-              className="w-full h-full flex-shrink-0 relative"
-            >
+            <div key={idx} className="w-full h-full flex-shrink-0 relative">
               <img
                 src={scene.imageUrl}
                 alt={`Scene ${idx + 1}`}
@@ -152,7 +158,7 @@ const StoryDashboard = () => {
           <>
             <button
               onClick={prevScene}
-              disabled={currentScene === 0}
+              disabled={isPlaying || currentScene === 0}
               className="absolute left-4 top-1/2 -translate-y-1/2 z-10 bg-white/80 p-2 rounded-full shadow"
             >
               <ChevronLeftIcon className="w-6 h-6" />
@@ -160,7 +166,7 @@ const StoryDashboard = () => {
 
             <button
               onClick={nextScene}
-              disabled={currentScene === scenes.length - 1}
+              disabled={isPlaying || currentScene === scenes.length - 1}
               className="absolute right-4 top-1/2 -translate-y-1/2 z-10 bg-white/80 p-2 rounded-full shadow"
             >
               <ChevronRightIcon className="w-6 h-6" />
