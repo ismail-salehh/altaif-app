@@ -12,23 +12,18 @@ import dotenv from "dotenv";
 dotenv.config();
 
 const useLocalModel = process.env.USE_LOCAL_MODEL === "true";
-const OpenAIKey = process.env.OPENAI_API_KEY;
-const GeminiKey = process.env.GEMINI_API_KEY;
 
 /* ---------------- GEMINI (TRANSLATION ONLY) ---------------- */
-let ai;
 
-if (typeof GeminiKey === "string" && GeminiKey.length > 0)
-  ai = new GoogleGenAI({apiKey: process.env.GEMINI_API_KEY,});
-else throw new Error("Gemini disabled in this environment");
+const ai = new GoogleGenAI({
+  apiKey: process.env.GEMINI_API_KEY,
+});
 
 /* ---------------- OPENAI (STORY + AUDIO) ---------------- */
 
-let openai;
-
-if (typeof OpenAIKey === "string" && OpenAIKey.length > 0)
-  openai = new OpenAI({ apiKey: process.env.OPENAI_API_KEY });
-else throw new Error("OpenAI disabled in this environment");
+const openai = new OpenAI({
+  apiKey: process.env.OPENAI_API_KEY,
+});
 
 /* ---------------- TRANSLATION ---------------- */
 
