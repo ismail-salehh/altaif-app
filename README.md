@@ -7,6 +7,22 @@ The system is designed to adapt story content based on user choices and stored i
 
 ---
 
+## Table of Contents
+
+- [Project Overview](#project-overview)
+- [Architecture](#architecture)
+- [Tech Stack](#tech-stack)
+  - [Frontend](#frontend)
+  - [Backend](#backend)
+  - [AI Server](#ai-server)
+- [Repository Structure](#repository-structure)
+- [AI Server (Local Only)](#ai-server-local-only)
+- [Running the Project](#running-the-project-development)
+- [Features](#features)
+- [Application Preview](#application-preview)
+
+---
+
 ## Project Overview
 
 The application consists of three main components:
@@ -16,6 +32,16 @@ The application consists of three main components:
 3. **AI Server** – Local Python service hosting a fine-tuned language model for story generation
 
 > ⚠️ The AI server and model files are **not included in this repository** due to size constraints (~1.4 GB).
+
+---
+
+## Features
+
+* User authentication (email + Google OAuth)
+* Interactive story gameplay
+* Choice-based story progression
+* Story dashboard
+* Media-rich UI (audio, images, video)
 
 ---
 
@@ -149,24 +175,6 @@ To run the full system, the AI server must be available locally and running befo
 
 ---
 
-## Environment Variables
-
-Both the client and server rely on environment variables.
-
-### Server (`/server/.env`)
-- MongoDB connection string
-- JWT secret
-- OAuth credentials
-- AI server base URL
-
-### Client (`/client/.env`)
-- API base URL
-- OAuth client ID
-
-> `.env` files are intentionally excluded from the repository.
-
----
-
 ## Running the Project (Development)
 
 ### 1. Start the AI Server (Local)
@@ -178,6 +186,8 @@ npm run build
 npm run dev
 ```
 
+---
+
 ## Application Preview
 
 ### Landing Page
@@ -188,3 +198,5 @@ npm run dev
 
 ### Story Dashboard
 ![Story Generation](client/public/images/readme/story-dashboard.png)
+
+
