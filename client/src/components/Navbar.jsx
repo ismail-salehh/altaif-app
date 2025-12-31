@@ -12,7 +12,7 @@ const Navbar = () => {
     mutationFn: logout,
     onSuccess: () => {
       queryClient.clear();
-      navigate("/login", { replace: true });
+      navigate("/", { replace: true });
     },
   });
 
@@ -50,8 +50,12 @@ const Navbar = () => {
           </button>
         ) : (
           <>
-            <button onClick={() => navigate("/login")}>تسجيل الدخول</button>
-            <button onClick={() => navigate("/register")}>إنشاء حساب</button>
+            <button 
+            className="bg-white rounded-3xl px-4 py-2 text-emerald-600 hover:bg-emerald-800 transition-colors"
+            onClick={() => navigate("/login")}>تسجيل الدخول</button>
+            <button 
+            className="bg-emerald-800 text-white px-4 py-2 rounded-3xl hover:bg-emerald-600 transition-colors"
+            onClick={() => navigate("/register")}>إنشاء حساب</button>
           </>
         )}
       </div>
