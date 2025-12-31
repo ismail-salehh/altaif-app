@@ -44,7 +44,7 @@ const Navbar = () => {
           <button
             onClick={logoutMutation}
             disabled={isPending}
-            className="bg-white px-4 py-2 text-red-600 hover:underline"
+            className="bg-white rounded-3xl px-4 py-2 text-red-600 font-bold hover:underline"
           >
             تسجيل الخروج
           </button>
