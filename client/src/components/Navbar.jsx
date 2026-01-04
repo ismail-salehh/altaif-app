@@ -1,8 +1,6 @@
-// /src/components/Navbar.jsx - Fixed with internal useQuery for auth
-import React, { useContext, useState } from "react";
+import React, { useContext } from "react";
 import { Link, useNavigate } from "react-router-dom";
-import { useMutation, useQuery } from "@tanstack/react-query";
-import api from "../utils/api";
+import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { AuthContext } from "../context/AuthContext";
 import { string } from "joi";
 
@@ -20,28 +18,15 @@ const Navbar = () => {
     retry: false, // Don't retry on failure
   });
 
-  const {
-    mutate: logoutMutation,
-    isPending,
-    isError,
-    error,
-  } = useMutation({
-    mutationFn: async () => {
-      return await logout();
-    },
+  const { mutate: logoutMutation, isPending } = useMutation({
+    mutationFn: logout,
     onSuccess: () => {
-      queryClient.removeQueries({ queryKey: ["authUser"] });
-      // Optional but recommended: Redirect to login page
-      navigate("/login", { replace: true }); // Replace to avoid back-button issues
-    },
-    onError: (err) => {
-      console.error("Logout mutation failed:", err);
-      // Optionally show a toast or alert, but since backend logout is idempotent, you could still clear cache here
-      queryClient.removeQueries({ queryKey: ["authUser"] });
+      queryClient.clear();
+      navigate("/", { replace: true });
     },
   });
 
-  if (authLoading) {
+  if (isAuthLoading) {
     return <nav className="bg-white shadow-md p-4">Loading...</nav>;
   }
 
@@ -68,7 +53,7 @@ const Navbar = () => {
       {/* Logo and Home Link */}
       <Link
         to="/"
-        className="bg-pink-500 px-2 py-2  rounded-3xl text-2xl font-bold text-white"
+        className="bg-pink-500 px-2 py-2 rounded-3xl text-2xl font-bold text-white"
       >
         <img
           src="/StoryLogo.png"
@@ -83,13 +68,13 @@ const Navbar = () => {
         {!window.location.pathname.startsWith("/game") && (
           <Link
             to="/gamepage"
-            className="bg-emerald-500 text-white px-4 py-2 rounded-3xl hover:bg-emerald-600 transition-colors"
+            className="bg-emerald-500 text-white px-4 py-2 rounded-3xl hover:bg-emerald-600"
           >
             العب
           </Link>
         )}
 
-        {authUser ? (
+        {user ? (
           <button
             onClick={() => logoutMutation()}
             disabled={isPending}
