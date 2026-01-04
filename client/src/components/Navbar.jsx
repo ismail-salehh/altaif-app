@@ -21,12 +21,12 @@ const Navbar = () => {
   const { mutate: logoutMutation, isPending } = useMutation({
     mutationFn: logout,
     onSuccess: () => {
-      queryClient.clear();
+      useQueryClient.clear();
       navigate("/", { replace: true });
     },
   });
 
-  if (isAuthLoading) {
+  if (authLoading) {
     return <nav className="bg-white shadow-md p-4">Loading...</nav>;
   }
 
