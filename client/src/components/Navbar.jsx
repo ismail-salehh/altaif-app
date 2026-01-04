@@ -4,10 +4,11 @@ import { Link, useNavigate } from "react-router-dom";
 import { useMutation, useQuery } from "@tanstack/react-query";
 import api from "../utils/api";
 import { AuthContext } from "../context/AuthContext";
+import { string } from "joi";
 
 const Navbar = () => {
-  // Internal auth query (same as App.jsx)
-  const { me } = useContext(AuthContext);
+  const { me, logout } = useContext(AuthContext);
+  const [open, setOpen] = useState(false);
   const navigate = useNavigate();
   const { data: authUser, isLoading: authLoading } = useQuery({
     queryKey: ["authUser"],
@@ -18,7 +19,6 @@ const Navbar = () => {
     cacheTime: 15 * 60 * 1000, // 15 minutes
     retry: false, // Don't retry on failure
   });
-  const { logout } = useContext(AuthContext);
 
   const {
     mutate: logoutMutation,
@@ -45,8 +45,25 @@ const Navbar = () => {
     return <nav className="bg-white shadow-md p-4">Loading...</nav>;
   }
 
+  const menuRef = React.useRef(null);
+
+  React.useEffect(() => {
+    const handleClickOutside = (event) => {
+      if (menuRef.current && !menuRef.current.contains(event.target)) {
+        setOpen(false);
+      }
+    };
+
+    if (open) {
+      document.addEventListener("mousedown", handleClickOutside);
+    }
+
+    return () => {
+      document.removeEventListener("mousedown", handleClickOutside);
+    };
+  }, [open]);
+
   return (
-    //add margin between buttons in the navbar
     <nav className="bg-opacity-100 shadow-md p-4 flex justify-between items-center ">
       {/* Logo and Home Link */}
       <Link
@@ -58,11 +75,11 @@ const Navbar = () => {
           alt="Logo"
           className="h-8 inline-block mr-2"
         />
-        الطَّيف
+        الطَّيف
       </Link>
 
       {/* About */}
-      <div className="flex items-center gap-4 space-x-4 space-x-reverse">
+      <div className="hidden md:flex items-center gap-4 space-x-4 space-x-reverse">
         {!window.location.pathname.startsWith("/game") && (
           <Link
             to="/gamepage"
@@ -74,8 +91,8 @@ const Navbar = () => {
 
         {authUser ? (
           <button
-            onClick={() => logoutMutation()} // Added () to call mutate properly
-            disabled={isPending} // Disable during logout
+            onClick={() => logoutMutation()}
+            disabled={isPending}
             title={isPending ? "جاري تسجيل الخروج..." : "تسجيل الخروج"}
             className="bg-white px-4 py-2 text-red-600 hover:underline"
           >
@@ -96,6 +113,61 @@ const Navbar = () => {
               إنشاء حساب
             </button>
           </>
+        )}
+      </div>
+
+      {/* Mobile Menu Button */}
+      <div className="md:hidden" ref={menuRef}>
+        <button
+          className="bg-emerald-800 text-white px-4 py-2 rounded-3xl hover:bg-emerald-600 transition-colors"
+          onClick={() => setOpen(!open)}
+        >
+          القائمة
+        </button>
+
+        {/* Mobile Menu */}
+        {open && (
+          <div
+            className={`fixed top-0 right-0 h-full w-64 bg-pink-500 shadow-lg transform transition-transform ${
+              open ? "translate-x-0" : "translate-x-full"
+            }`}
+          >
+            <div className="p-4 flex flex-col gap-4">
+              {authUser ? (
+                <button
+                  onClick={() => logoutMutation()}
+                  disabled={isPending}
+                  title={isPending ? "جاري تسجيل الخروج..." : "تسجيل الخروج"}
+                  className="bg-white px-4 py-2 text-red-600 hover:underline"
+                >
+                  تسجيل الخروج
+                </button>
+              ) : (
+                <>
+                  <button
+                    onClick={() => navigate("/login")}
+                    className="bg-white rounded-3xl px-4 py-2 text-emerald-600 hover:bg-emerald-800 transition-colors"
+                  >
+                    تسجيل الدخول
+                  </button>
+                  <button
+                    onClick={() => navigate("/login")}
+                    className="bg-emerald-800 text-white px-4 py-2 rounded-3xl hover:bg-emerald-600 transition-colors"
+                  >
+                    إنشاء حساب
+                  </button>
+                </>
+              )}
+              {!window.location.pathname.startsWith("/game") && (
+                <Link
+                  to="/gamepage"
+                  className="bg-emerald-500 text-white px-4 py-2 rounded-3xl hover:bg-emerald-600 transition-colors"
+                >
+                  العب
+                </Link>
+              )}
+            </div>
+          </div>
         )}
       </div>
     </nav>
