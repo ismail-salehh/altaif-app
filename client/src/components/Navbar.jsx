@@ -1,13 +1,15 @@
 import React, { useContext, useState } from "react";
-import { Link, useNavigate } from "react-router-dom";
+import { Link, useNavigate, useLocation } from "react-router-dom";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { AuthContext } from "../context/AuthContext";
-import { string } from "joi";
 
 const Navbar = () => {
   const { me, logout } = useContext(AuthContext);
   const [open, setOpen] = useState(false);
   const navigate = useNavigate();
+  const queryClient = useQueryClient();
+const location = useLocation();
+
   const { data: authUser, isLoading: authLoading } = useQuery({
     queryKey: ["authUser"],
     queryFn: async () => {
@@ -21,7 +23,7 @@ const Navbar = () => {
   const { mutate: logoutMutation, isPending } = useMutation({
     mutationFn: logout,
     onSuccess: () => {
-      useQueryClient.clear();
+      queryClient.clear();
       navigate("/", { replace: true });
     },
   });
@@ -65,7 +67,7 @@ const Navbar = () => {
 
       {/* About */}
       <div className="hidden md:flex items-center gap-4 space-x-4 space-x-reverse">
-        {!window.location.pathname.startsWith("/game") && (
+        {!location.pathname.startsWith("/game") && (
           <Link
             to="/gamepage"
             className="bg-emerald-500 text-white px-4 py-2 rounded-3xl hover:bg-emerald-600"
@@ -74,7 +76,7 @@ const Navbar = () => {
           </Link>
         )}
 
-        {user ? (
+        {authUser ? (
           <button
             onClick={() => logoutMutation()}
             disabled={isPending}
