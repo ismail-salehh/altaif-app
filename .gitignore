@@ -25,6 +25,3 @@ dist-ssr
 *.sw?
 
 .env
-
-client/*
-server/*
