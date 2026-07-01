@@ -4,225 +4,176 @@ import bcrypt from 'bcryptjs';
 import { OAuth2Client } from 'google-auth-library';
 import crypto from 'crypto';
 import nodemailer from 'nodemailer';
+import { logger } from '../utils/logger.js';
 
-// Helper: create nodemailer transporter if env vars are present
-const createTransporter = () => {
+/* ── Email transporter (only built when env vars are present) ───── */
+function createTransporter() {
+  if (!process.env.EMAIL_USER || !process.env.EMAIL_PASS) return null;
   return nodemailer.createTransport({
-  service: "gmail",
-  auth: {
-    user: process.env.EMAIL_USER,
-    pass: process.env.EMAIL_PASS,
-  },
-    tls: {
-    rejectUnauthorized: process.env.NODE_ENV === "production",
-  },
+    service: 'gmail',
+    auth: { user: process.env.EMAIL_USER, pass: process.env.EMAIL_PASS },
+    tls: { rejectUnauthorized: process.env.NODE_ENV === 'production' },
   });
-};
+}
 
-// ✅ Signup Controller
+/* ── Signup ──────────────────────────────────────────────────────── */
 export const signup = async (req, res) => {
   try {
-    const { username, email, password } = req.body;
+    const { username, email, password } = req.body; // already validated + sanitised by middleware
 
-    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-    if (!emailRegex.test(email)) {
-      return res.status(400).json({ error: "Invalid email format!" });
-    }
+    if (await User.findOne({ email }))
+      return res.status(400).json({ error: 'Email is already registered' });
 
-    const existingUser = await User.findOne({ email });
-    if (existingUser) {
-      return res.status(400).json({ error: "Email is already registered!" });
-    }
+    const hashedPassword = await bcrypt.hash(password, 12);
+    const newUser = await User.create({ username, email, password: hashedPassword });
+    const token   = generateTokenAndSetCookie(newUser._id, res);
 
-    if (password.length < 6) {
-      return res.status(400).json({ error: "Password must be at least 6 characters!" });
-    }
-
-    const salt = await bcrypt.genSalt(10);
-    const hashedPassword = await bcrypt.hash(password, salt);
-
-    const newUser = new User({ username, email, password: hashedPassword });
-
-    await newUser.save();
-    const token = generateTokenAndSetCookie(newUser._id, res);
-
-    res.status(201).json({
-      token,
-      user: {
-        _id: newUser._id,
-        username: newUser.username,
-        email: newUser.email,
-        profileImg: newUser.profileImg,
-      },
-    });
-
+    logger.info('User signed up', { userId: newUser._id });
+    res.status(201).json({ token, user: { _id: newUser._id, username: newUser.username, email: newUser.email } });
   } catch (err) {
-    console.log(`Error in signup controller ${err.message}`);
-    res.status(500).json({ error: "Internal Server Error" });
+    logger.error('signup error', { message: err.message });
+    res.status(500).json({ error: 'Internal Server Error' });
   }
 };
 
-// ✅ Login Controller
+/* ── Login ───────────────────────────────────────────────────────── */
 export const login = async (req, res) => {
   try {
     const { email, password } = req.body;
 
     const user = await User.findOne({ email });
-    if (!user) {
-      return res.status(400).json({ error: "Invalid email or password" });
-    }
-
-    const isPasswordCorrect = await bcrypt.compare(password, user.password);
-    if (!isPasswordCorrect) {
-      return res.status(400).json({ error: "Invalid email or password" });
-    }
+    // Constant-time comparison to prevent user-enumeration timing attacks
+    const passwordOk = user ? await bcrypt.compare(password, user.password) : false;
+    if (!user || !passwordOk)
+      return res.status(400).json({ error: 'Invalid email or password' });
 
     const token = generateTokenAndSetCookie(user._id, res);
-
-    res.status(200).json({
-      token,
-      user: {
-        _id: user._id,
-        username: user.username,
-        email: user.email,
-        profileImg: user.profileImg,
-      },
-    });
-
+    logger.info('User logged in', { userId: user._id });
+    res.status(200).json({ token, user: { _id: user._id, username: user.username, email: user.email } });
   } catch (err) {
-    console.log(`Error in login controller ${err.message}`);
-    res.status(500).json({ error: "Internal Server Error!" });
+    logger.error('login error', { message: err.message });
+    res.status(500).json({ error: 'Internal Server Error' });
   }
 };
 
+/* ── Google Auth ─────────────────────────────────────────────────── */
 export const googleAuth = async (req, res) => {
   try {
     const { token } = req.body;
     if (!token) return res.status(400).json({ error: 'Token is required' });
 
-    const client = new OAuth2Client(process.env.GOOGLE_CLIENT_ID);
-    const ticket = await client.verifyIdToken({
-      idToken: token,
-      audience: process.env.GOOGLE_CLIENT_ID,
-    });
+    const client  = new OAuth2Client(process.env.GOOGLE_CLIENT_ID);
+    const ticket  = await client.verifyIdToken({ idToken: token, audience: process.env.GOOGLE_CLIENT_ID });
     const payload = ticket.getPayload();
-    if (!payload) return res.status(400).json({ error: 'Invalid Google token payload' });
+    if (!payload) return res.status(400).json({ error: 'Invalid Google token' });
 
-    const { email, sub: googleId } = payload;
+    const { email, sub: googleId, name } = payload;
     let user = await User.findOne({ googleId }) || await User.findOne({ email });
 
-    if (user && !user.googleId) {
-      user.googleId = googleId;
-      await user.save();
-    }
+    if (user && !user.googleId) { user.googleId = googleId; await user.save(); }
+    if (!user) user = await User.create({ email, googleId, username: name });
 
-    if (!user) user = await User.create({ email, googleId });
     const jwToken = generateTokenAndSetCookie(user._id, res);
-
-    res.status(200).json({
-      token: jwToken,
-      user: {
-        _id: user._id,
-        username: user.username,
-        email: user.email,
-        profileImg: user.profileImg,
-      },
-    });
+    res.status(200).json({ token: jwToken, user: { _id: user._id, username: user.username, email: user.email } });
   } catch (err) {
-    console.error('Error in googleAuth:', err);
+    logger.error('googleAuth error', { message: err.message });
     res.status(500).json({ error: 'Internal Server Error' });
   }
 };
 
-// Forgot Password
+/* ── Forgot Password ─────────────────────────────────────────────── */
 export const forgotPassword = async (req, res) => {
   try {
     const { email } = req.body;
-    if (!email) return res.status(400).json({ message: 'Email is required' });
+    if (!email) return res.status(400).json({ error: 'Email is required' });
 
     const user = await User.findOne({ email });
-    if (!user) return res.status(404).json({ message: 'User not found' });
+    // Always return 200 — don't reveal whether email exists
+    if (!user) return res.status(200).json({ message: 'If that email exists, a reset link has been sent.' });
 
-    const resetToken = crypto.randomBytes(20).toString('hex');
+    // Generate token → store HASHED version in DB, send PLAIN version in email
+    const plainToken  = crypto.randomBytes(32).toString('hex');
+    const hashedToken = crypto.createHash('sha256').update(plainToken).digest('hex');
 
-    user.resetToken = resetToken;
-    user.resetTokenExpiry = Date.now() + 3600000; // 1 hour
+    user.resetToken      = hashedToken;
+    user.resetTokenExpiry = new Date(Date.now() + 60 * 60 * 1000); // 1 hour
     await user.save();
 
     const clientUrl = process.env.CLIENT_URL || 'https://altaif-app.onrender.com';
-    const resetUrl = `${clientUrl}/reset-password/${resetToken}`;
-
-    const message = `Reset your password using the following link: ${resetUrl}\n\nThis link expires in 1 hour.`;
+    const resetUrl  = `${clientUrl}/reset-password/${plainToken}`;
 
     const transporter = createTransporter();
     if (!transporter) {
-      console.warn('Email transporter is not configured. Skipping email send.');
-      return res.status(200).json({ message: 'Reset token generated. Email transporter not configured.' });
+      logger.warn('Email transporter not configured — reset token generated but not sent', { userId: user._id });
+      return res.status(200).json({ message: 'If that email exists, a reset link has been sent.' });
     }
 
-    const mail = transporter.sendMail({
-      from: process.env.EMAIL_USER,
-      to: email,
+    await transporter.sendMail({
+      from:    process.env.EMAIL_USER,
+      to:      email,
       subject: 'Password Reset',
-      text: message,
+      text:    `Reset your password: ${resetUrl}\n\nThis link expires in 1 hour.`,
     });
-    await mail;
 
-    res.status(200).json({ message: 'Reset message sent!' });
+    logger.info('Password reset email sent', { userId: user._id });
+    res.status(200).json({ message: 'If that email exists, a reset link has been sent.' });
   } catch (err) {
-    console.error(`Error in sending the reset message: ${err?.message || err}`);
+    logger.error('forgotPassword error', { message: err.message });
     res.status(500).json({ error: 'Internal Server Error' });
   }
 };
 
-// Reset Password
+/* ── Reset Password ──────────────────────────────────────────────── */
 export const resetPassword = async (req, res) => {
   try {
     const { token } = req.params;
     const { password } = req.body;
-    if (!token || !password) return res.status(400).json({ message: 'Token and new password required' });
+    if (!token || !password) return res.status(400).json({ error: 'Token and new password are required' });
+    if (password.length < 6) return res.status(400).json({ error: 'Password must be at least 6 characters' });
+
+    // Hash the incoming token to compare with stored hash
+    const hashedToken = crypto.createHash('sha256').update(token).digest('hex');
 
     const user = await User.findOne({
-      resetToken: token,
+      resetToken:      hashedToken,
       resetTokenExpiry: { $gt: Date.now() },
-    });
+    }).select('+resetToken +resetTokenExpiry');
 
-    if (!user) return res.status(400).json({ message: 'Invalid or expired token' });
+    if (!user) return res.status(400).json({ error: 'Invalid or expired reset link' });
 
-    // Hash new password before saving
-    const salt = await bcrypt.genSalt(10);
-    user.password = await bcrypt.hash(password, salt);
-    user.resetToken = undefined;
+    user.password        = await bcrypt.hash(password, 12);
+    user.resetToken      = undefined;
     user.resetTokenExpiry = undefined;
     await user.save();
 
+    logger.info('Password reset successful', { userId: user._id });
     res.status(200).json({ message: 'Password reset successfully' });
   } catch (err) {
-    console.error(`Error in resetting the password: ${err?.message || err}`);
+    logger.error('resetPassword error', { message: err.message });
     res.status(500).json({ error: 'Internal Server Error' });
   }
 };
 
-
-// ✅ Logout Controller
-export const logout = async (req, res) => {
+/* ── Logout ──────────────────────────────────────────────────────── */
+export const logout = async (_req, res) => {
   try {
     res.cookie('jwt', '', { maxAge: 0 });
-    res.status(200).json({ message: "Logged out successfully!" });
+    res.status(200).json({ message: 'Logged out successfully' });
   } catch (err) {
-    console.log(`Error in logout controller ${err.message}`);
-    res.status(500).json({ error: "Internal Server Error!" });
+    logger.error('logout error', { message: err.message });
+    res.status(500).json({ error: 'Internal Server Error' });
   }
 };
 
-// In getMe:
+/* ── Get Me ──────────────────────────────────────────────────────── */
 export const getMe = async (req, res) => {
   try {
-    const user = await User.findById(req.user._id).select("-password");
-    if (!user) return res.status(401).json({ error: "User not found" });
-    res.status(200).json({ user });  // Return user directly
+    const user = await User.findById(req.user._id).select('-password');
+    if (!user) return res.status(401).json({ error: 'User not found' });
+    // Return the user object directly (not wrapped in { user: ... })
+    res.status(200).json(user);
   } catch (err) {
-    console.log(`Error in getMe controller ${err.message}`);
-    res.status(500).json({ error: "Internal Server Error!" });
+    logger.error('getMe error', { message: err.message });
+    res.status(500).json({ error: 'Internal Server Error' });
   }
 };

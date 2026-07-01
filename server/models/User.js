@@ -1,26 +1,21 @@
-import mongoose from "mongoose";
-import bcrypt from "bcryptjs";
+import mongoose from 'mongoose';
 
 const userSchema = new mongoose.Schema({
-  username: { type: String, minlength: 2 },
-  email: { type: String, required: true, unique: true },
-  password: { type: String,  required: function () {return !this.googleId;}, minlength: 6 },
-  googleId: String, // For Google users
-  resetToken: String,
-  resetTokenExpiry: Date,
+  username:       { type: String, minlength: 2, maxlength: 50, trim: true },
+  email:          { type: String, required: true, unique: true, lowercase: true, trim: true },
+  password:       { type: String, required: function () { return !this.googleId; }, minlength: 6 },
+  googleId:       { type: String },
+  resetToken:     { type: String, select: false },
+  resetTokenExpiry: { type: Date, select: false },
 }, { timestamps: true });
 
-// Hash password
-userSchema.pre('save', async function(next) {
-  if (!this.isModified('password')) return next();
-  this.password = await bcrypt.hash(this.password, 12);
-  next();
-});
+userSchema.index({ email: 1 });                     // login lookup
+userSchema.index({ googleId: 1 }, { sparse: true }); // Google auth
+userSchema.index({ resetToken: 1 }, { sparse: true, expireAfterSeconds: 3600 }); // auto-TTL
 
-// Compare password
-userSchema.methods.comparePassword = async function(password) {
-  return bcrypt.compare(password, this.password);
+userSchema.methods.comparePassword = async function (password) {
+  const bcrypt = await import('bcryptjs');
+  return bcrypt.default.compare(password, this.password);
 };
 
-const User = mongoose.model("User", userSchema);
-export default User;
+export default mongoose.model('User', userSchema);

@@ -1,16 +1,18 @@
 import express from 'express';
-import { forgotPassword, getMe, login, logout, resetPassword, signup} from '../controllers/authController.js';
+import { forgotPassword, getMe, login, logout, resetPassword, signup, googleAuth } from '../controllers/authController.js';
 import { protect } from '../middleware/authMiddleware.js';
-import { googleAuth } from "../controllers/authController.js";
+import { authLimiter } from '../middleware/rateLimiter.js';
+import { validateSignup, validateLogin } from '../middleware/validate.js';
 
 const router = express.Router();
 
 router.get('/me', protect, getMe);
-router.post('/signup', signup);
-router.post('/login', login);
-router.post('/logout', logout);
-router.post('/forgot-password', forgotPassword);
-router.put('/reset-password/:token', resetPassword);
-router.post("/google", googleAuth);
+
+router.post('/signup',          authLimiter, validateSignup, signup);
+router.post('/login',           authLimiter, validateLogin,  login);
+router.post('/google',          authLimiter, googleAuth);
+router.post('/logout',          logout);
+router.post('/forgot-password', authLimiter, forgotPassword);
+router.put('/reset-password/:token', authLimiter, resetPassword);
 
 export default router;
